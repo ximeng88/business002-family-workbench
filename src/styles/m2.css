@@ -1,0 +1,978 @@
+/**
+ * M2 样式：积分商城、我的装扮、奖励管理、兑换审核。
+ * 叠在 pages.css / m1.css 之后加载，只新增类，不覆盖既有页面结构。
+ */
+
+/* ---------------- 家长端五个 Tab ---------------- */
+
+body[data-mode="parent"] .tabbar {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2px;
+}
+
+body[data-mode="parent"] .tab {
+  height: 50px;
+  border-radius: 17px;
+}
+
+body[data-mode="parent"] .tab__label {
+  font-size: 9.5px;
+  letter-spacing: 0;
+}
+
+body[data-mode="parent"] .tab__ico svg {
+  width: 19px;
+  height: 19px;
+}
+
+body[data-mode="parent"] .tab__badge {
+  margin-right: -14px;
+  top: 3px;
+  min-width: 15px;
+  height: 15px;
+  font-size: 9.5px;
+  line-height: 15px;
+}
+
+/* ---------------- 分段切换（孩子端 / 家长端共用） ---------------- */
+
+.segmented {
+  display: flex;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 4px;
+  border-radius: 18px;
+  background: var(--surface-sunk);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+
+.segmented__btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 38px;
+  border-radius: 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-500);
+  transition: background 0.24s var(--ease-out), color 0.2s, box-shadow 0.24s;
+}
+
+.segmented__btn.is-active {
+  background: #fff;
+  color: var(--orange-700);
+  box-shadow: var(--shadow-1), inset 0 0 0 1.5px var(--orange-100);
+}
+
+body[data-mode="parent"] .segmented__btn.is-active {
+  color: var(--parent-700);
+  box-shadow: var(--shadow-parent), inset 0 0 0 1.5px var(--parent-line);
+}
+
+.segmented__count {
+  padding: 1px 5px;
+  border-radius: 7px;
+  font-size: 9.5px;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.segmented__btn.is-active .segmented__count {
+  background: var(--orange-50);
+  color: var(--orange-600);
+}
+
+body[data-mode="parent"] .segmented__btn.is-active .segmented__count {
+  background: var(--parent-50);
+  color: var(--parent-700);
+}
+
+/* ---------------- 孩子端：奖励中心 ---------------- */
+
+.shop {
+  margin-top: 18px;
+}
+
+.shop__head,
+.wardrobe__head,
+.req-list__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 4px 2px;
+}
+
+.shop__head h2,
+.wardrobe__head h2,
+.req-list__head h2 {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.shop__head span,
+.wardrobe__head span,
+.req-list__head span {
+  font-size: 11px;
+  color: var(--ink-300);
+}
+
+.shop-pending {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 11px 14px;
+  border-radius: 16px;
+  background: var(--blue-50);
+  box-shadow: inset 0 0 0 1.5px var(--blue-100);
+  color: #2a5aa8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.shop-pending svg {
+  flex: none;
+}
+
+.shop-list {
+  display: grid;
+  gap: 9px;
+  margin-top: 10px;
+}
+
+@keyframes m2-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.shop-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 12px;
+  border-radius: var(--r-md);
+  background: #fff;
+  box-shadow: var(--shadow-1);
+  animation: m2-in 0.34s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 38ms);
+}
+
+.shop-card__art {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  flex: none;
+}
+
+.shop-card__art .costume-thumb {
+  width: 42px;
+  height: 42px;
+}
+
+.costume-thumb {
+  display: block;
+}
+
+.shop-card__body {
+  min-width: 0;
+}
+
+.shop-card__body h3 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-900);
+  line-height: 1.25;
+}
+
+.shop-card__body p {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--ink-500);
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.shop-card__tag {
+  padding: 1px 5px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--purple-600);
+  background: var(--purple-50);
+}
+
+.shop-card__foot {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 6px;
+}
+
+.shop-card__cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 9px;
+  background: var(--star-100);
+  color: var(--star-700);
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.shop-card__short {
+  font-size: 10px;
+  color: var(--ink-300);
+}
+
+.shop-card__action {
+  flex: none;
+}
+
+.shop-btn {
+  height: 34px;
+  padding: 0 11px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  background: linear-gradient(180deg, var(--orange-400), var(--orange-600));
+  box-shadow:
+    0 9px 18px -12px rgba(242, 112, 27, 0.95),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.09);
+  transition: transform 0.16s var(--ease-spring), opacity 0.2s;
+}
+
+.shop-btn:active {
+  transform: scale(0.95);
+}
+
+.shop-btn:disabled {
+  color: var(--ink-300);
+  background: var(--surface-sunk);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+
+/* 星星不够：弱化成"提示态"按钮，仍然可点（点一下告诉孩子还差多少），但不发申请 */
+.shop-btn--short {
+  color: var(--orange-700);
+  background: var(--orange-50);
+  box-shadow: inset 0 0 0 1.5px rgba(242, 112, 27, 0.35);
+}
+
+.shop-btn--short:active {
+  transform: scale(0.95);
+}
+
+/* 换不了的卡片整体降一点存在感，避免和"能换"的混在一起 */
+.shop-card.is-short .shop-card__cost {
+  color: var(--ink-500);
+}
+
+.shop-card.is-short .shop-card__art {
+  opacity: 0.72;
+}
+
+.shop-card__done {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 9px;
+  border-radius: 11px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green-600);
+  background: var(--green-50);
+  white-space: nowrap;
+}
+
+.shop-card__wait {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 11px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--blue-600);
+  background: var(--blue-50);
+  white-space: nowrap;
+}
+
+.shop-empty {
+  margin-top: 10px;
+  padding: 20px 16px;
+  border-radius: var(--r-md);
+  background: #fff;
+  box-shadow: var(--shadow-1);
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--ink-500);
+}
+
+.shop-empty__sub {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--ink-300);
+}
+
+.shop__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 0 4px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--ink-300);
+}
+
+.shop__note svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+/* ---------------- 孩子端：我的装扮 ---------------- */
+
+.wardrobe {
+  margin-top: 18px;
+}
+
+.wardrobe__grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.wardrobe__cell {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 2px;
+  padding: 8px 3px 7px;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: var(--shadow-1);
+  transition: box-shadow 0.24s, transform 0.18s var(--ease-spring), background 0.24s;
+  animation: m2-in 0.32s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+.wardrobe__cell.is-owned:active {
+  transform: scale(0.96);
+}
+
+.wardrobe__cell.is-empty {
+  background: var(--surface-sunk);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+
+.wardrobe__cell.is-worn {
+  background: linear-gradient(180deg, #fff6ea, #ffe9d6);
+  box-shadow: 0 0 0 2px var(--orange-400), var(--shadow-2);
+}
+
+.wardrobe__cell .costume-thumb {
+  width: 32px;
+  height: 32px;
+}
+
+.wardrobe__slot {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--ink-300);
+}
+
+.wardrobe__lock {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 11px;
+  color: var(--ink-300);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.wardrobe__name {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--ink-700);
+  line-height: 1.2;
+  text-align: center;
+}
+
+.wardrobe__cell.is-empty .wardrobe__name {
+  color: var(--ink-300);
+  font-weight: 500;
+}
+
+.wardrobe__state {
+  font-size: 8px;
+  color: var(--orange-700);
+  font-weight: 600;
+}
+
+.wardrobe__cell.is-empty .wardrobe__state {
+  display: none;
+}
+
+/* ---------------- 孩子端：申请记录 ---------------- */
+
+.req-list {
+  margin-top: 18px;
+}
+
+.req-list__items {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.req-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--shadow-1);
+  animation: m2-in 0.3s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 35ms);
+}
+
+.req-row__name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.req-row__meta {
+  font-size: 10px;
+  color: var(--ink-300);
+}
+
+.req-row__state {
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.req-row__state--wait {
+  color: var(--blue-600);
+  background: var(--blue-50);
+}
+
+.req-row__state--ok {
+  color: var(--green-600);
+  background: var(--green-50);
+}
+
+.req-row__state--off {
+  color: var(--ink-500);
+  background: var(--surface-sunk);
+}
+
+/* 流水里的扣分：不用刺眼的红，只是"变少了" */
+.ledger__delta.is-minus {
+  color: var(--ink-500);
+}
+
+/* ---------------- 孩子端：星空背景时的夜间舞台 ---------------- */
+
+.pet-stage.is-night {
+  background: linear-gradient(165deg, #2b2f6b 0%, #3b3577 55%, #5a4380 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 24px 48px -24px rgba(28, 22, 66, 0.85);
+}
+
+/* SVG 里的星空底色已经由舞台承担，去掉重复的矩形，避免出现一个"相框" */
+.pet-stage.is-night .costume--bg rect {
+  fill: none;
+}
+
+.pet-stage.is-night .pet-stage__name {
+  color: #fff;
+}
+
+.pet-stage.is-night .pet-stage__hint {
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.pet-stage.is-night .pet-stage__badge {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+
+.pet-stage.is-night .pet-stage__badge span {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.pet-stage.is-night .cloud {
+  opacity: 0.16;
+}
+
+/* ---------------- 家长端：奖励管理 ---------------- */
+
+.reward-list {
+  display: grid;
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.reward-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--r-md);
+  background: #fff;
+  box-shadow: var(--shadow-parent);
+  animation: m2-in 0.32s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 32ms);
+}
+
+.reward-row.is-off {
+  background: #fbfbfd;
+  box-shadow: inset 0 0 0 1.5px var(--parent-line);
+}
+
+.reward-row.is-off .reward-row__body h3,
+.reward-row.is-off .reward-row__price {
+  opacity: 0.6;
+}
+
+.reward-row__art {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--parent-700);
+  background: var(--parent-50);
+}
+
+.reward-row__art.is-costume {
+  background: var(--orange-50);
+}
+
+.reward-row__art .costume-thumb {
+  width: 36px;
+  height: 36px;
+}
+
+.reward-row__body {
+  min-width: 0;
+}
+
+.reward-row__body h3 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--parent-900);
+  line-height: 1.3;
+}
+
+.reward-row__body p {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--ink-500);
+  line-height: 1.4;
+}
+
+.reward-row__price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 5px;
+  font-size: 10.5px;
+  color: var(--ink-500);
+}
+
+.reward-row__price b {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--parent-900);
+  font-variant-numeric: tabular-nums;
+}
+
+.reward-row__price span {
+  font-size: 10px;
+  color: var(--ink-300);
+}
+
+.reward-row__price span.is-changed {
+  color: var(--star-700);
+}
+
+.reward-row__badge {
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.reward-row__badge.is-builtin {
+  color: var(--parent-700);
+  background: var(--parent-50);
+}
+
+.reward-row__badge.is-custom {
+  color: var(--purple-600);
+  background: var(--purple-50);
+}
+
+.reward-row__badge.is-off {
+  color: var(--ink-500);
+  background: var(--surface-sunk);
+}
+
+.reward-row__ctrl {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 2px;
+}
+
+.mini-btn {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 11px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--parent-700);
+  background: var(--parent-50);
+  transition: transform 0.16s var(--ease-spring), opacity 0.2s;
+}
+
+.mini-btn:active {
+  transform: scale(0.96);
+}
+
+.mini-btn--off {
+  color: var(--parent-danger);
+  background: var(--parent-danger-soft);
+}
+
+.icon-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.icon-opt {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  color: var(--ink-500);
+  background: var(--surface-sunk);
+  box-shadow: inset 0 0 0 1.5px transparent;
+  transition: transform 0.16s var(--ease-spring), box-shadow 0.2s, background 0.2s, color 0.2s;
+}
+
+.icon-opt.is-active {
+  background: #fff;
+  color: var(--parent-700);
+  box-shadow: inset 0 0 0 1.8px var(--parent-600);
+}
+
+.icon-opt:active {
+  transform: scale(0.94);
+}
+
+.add-reward {
+  margin-top: 16px;
+}
+
+/* ---------------- 家长端：兑换审核 ---------------- */
+
+.redeem-list {
+  display: grid;
+  gap: 11px;
+  margin-top: 12px;
+}
+
+.redeem {
+  padding: 13px;
+  border-radius: var(--r-md);
+  background: #fff;
+  box-shadow: var(--shadow-parent);
+  transition: opacity 0.24s, transform 0.24s var(--ease-out);
+  animation: m2-in 0.34s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+.redeem.is-busy {
+  opacity: 0.72;
+}
+
+.redeem.is-approved {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+.redeem__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.redeem__art {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--parent-700);
+  background: var(--parent-50);
+}
+
+.redeem__art.is-costume {
+  background: var(--orange-50);
+}
+
+.redeem__art .costume-thumb {
+  width: 36px;
+  height: 36px;
+}
+
+.redeem__title h2 {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--parent-900);
+}
+
+.redeem__title p {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--ink-500);
+}
+
+.redeem__cat {
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--orange-700);
+  background: var(--orange-50);
+}
+
+.redeem__cost {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--star-700);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.redeem__facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 11px;
+  padding: 9px 6px;
+  border-radius: 14px;
+  background: #f7f9fe;
+  box-shadow: inset 0 0 0 1px var(--parent-line);
+}
+
+.redeem__fact {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  text-align: center;
+}
+
+.redeem__fact span {
+  font-size: 9.5px;
+  color: var(--ink-300);
+}
+
+.redeem__fact b {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--parent-900);
+  font-variant-numeric: tabular-nums;
+}
+
+.redeem__fact b.is-short {
+  color: var(--parent-danger);
+}
+
+.redeem__warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 9px;
+  padding: 9px 11px;
+  border-radius: 13px;
+  background: var(--parent-danger-soft);
+  color: #9c3030;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.redeem__warn svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.redeem__actions {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.redeem__actions .btn {
+  height: 42px;
+  font-size: 13px;
+  border-radius: 15px;
+}
+
+.redeem-flow {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: var(--r-md);
+  background: #fff;
+  box-shadow: var(--shadow-parent);
+}
+
+.redeem-flow h2 {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--parent-900);
+}
+
+.redeem-flow__list {
+  display: grid;
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.redeem-flow__list li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--ink-500);
+}
+
+.redeem-flow__list li span {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--parent-700);
+  background: var(--parent-50);
+}
+
+/* ---------------- 面板里的补充控件 ---------------- */
+
+.field--single {
+  padding: 0 12px;
+}
+
+.field--single input {
+  width: 100%;
+  height: 46px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink-900);
+}
+
+.form-row--bare {
+  margin-bottom: 10px;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.points-view--lg b {
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.stepper--compact {
+  gap: 8px;
+}
+
+.stepper--compact .stepper__btn {
+  width: 40px;
+  height: 40px;
+  font-size: 19px;
+}
+
+.sheet__hint {
+  margin: -4px 0 14px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--ink-300);
+}
+
+/* ---------------- 小屏 ---------------- */
+
+@media (max-width: 370px) {
+  body[data-mode="parent"] .tab__label {
+    font-size: 9px;
+  }
+
+  .shop-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .shop-card__action {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .wardrobe__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

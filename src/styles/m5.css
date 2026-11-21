@@ -1,0 +1,336 @@
+/**
+ * M5：兑换多选（孩子端清单 + 家长端按批卡片）。
+ *
+ * 只加新类，不改 M2 既有卡片骨架，避免回归；
+ * 颜色沿用同一套 token：孩子端蜜橘、家长端静蓝。
+ */
+
+/* ---------------- 孩子端：商城卡片可勾选 ---------------- */
+
+/* 卡片整体可点：按钮的透明覆盖层铺满卡片，小手指点哪儿都算 */
+.shop-card {
+  position: relative;
+  transition:
+    box-shadow 0.2s var(--ease-out),
+    transform 0.16s var(--ease-spring),
+    background 0.2s;
+}
+
+.shop-card.is-pickable .shop-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-md);
+}
+
+.shop-card.is-picked {
+  background: linear-gradient(180deg, #fffaf2, #fff3e4);
+  box-shadow:
+    inset 0 0 0 2px var(--orange-400),
+    0 10px 22px -16px rgba(242, 112, 27, 0.8);
+}
+
+.shop-card.is-picked .shop-card__art {
+  transform: scale(1.02);
+}
+
+/* 角上的小勾：选了哪几件一眼看得见 */
+.shop-card__check {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--orange-600);
+  box-shadow: 0 0 0 2.5px #fff;
+  animation: m5-pop 0.24s var(--ease-spring) both;
+}
+
+.shop-card__art {
+  position: relative;
+}
+
+@keyframes m5-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.shop-btn--pick {
+  color: var(--orange-700);
+  background: #fff;
+  box-shadow: inset 0 0 0 1.6px var(--orange-100);
+}
+
+.shop-btn--picked {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #fff;
+  background: linear-gradient(180deg, var(--orange-400), var(--orange-600));
+}
+
+/* ---------------- 孩子端：底部汇总条 ---------------- */
+
+.shop-bar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--tabbar-h) + 14px + env(safe-area-inset-bottom));
+  z-index: 35;
+  transform: translateX(-50%);
+  width: min(calc(100% - 24px), calc(var(--shell-max) - 24px));
+  display: grid;
+  gap: 9px;
+  padding: 11px 13px 12px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow:
+    0 18px 40px -20px rgba(120, 78, 30, 0.55),
+    inset 0 0 0 1.5px rgba(255, 214, 178, 0.9);
+  animation: m5-rise 0.26s var(--ease-out) both;
+}
+
+.shop-bar[hidden] {
+  display: none;
+}
+
+@keyframes m5-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 14px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.shop-bar__sum {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 2px;
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.shop-bar__count b,
+.shop-bar__cost b {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink-900);
+  font-variant-numeric: tabular-nums;
+}
+
+.shop-bar__left {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green-600);
+}
+
+.shop-bar__left.is-short {
+  color: var(--orange-700);
+}
+
+.shop-bar__actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 9px;
+}
+
+.shop-bar__clear {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 15px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-500);
+  background: var(--surface-sunk);
+}
+
+.shop-bar__clear:active {
+  transform: scale(0.96);
+}
+
+.shop-bar__submit {
+  height: 44px;
+  border-radius: 15px;
+  font-size: 14px;
+}
+
+.shop-bar__submit:disabled {
+  color: var(--ink-300);
+  background: var(--surface-sunk);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+
+/* 底部条会盖住内容，勾选时给页面补一段空白 */
+.page--pet.has-shop-bar {
+  padding-bottom: 104px;
+}
+
+/* ---------------- 家长端：按批次卡片 ---------------- */
+
+/* .redeem__warn 自带 display:flex，会盖掉 [hidden] 的 display:none，必须显式关掉 */
+.redeem__warn[hidden] {
+  display: none;
+}
+
+.redeem--batch .redeem__art {
+  font-size: 23px;
+  line-height: 1;
+  background: var(--parent-50);
+}
+
+.batch-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.batch-item {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: #f7f9fe;
+  box-shadow: inset 0 0 0 1px var(--parent-line);
+  transition: opacity 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.batch-item.is-off {
+  opacity: 0.55;
+  background: #f4f4f6;
+  box-shadow: inset 0 0 0 1px #e8e8ee;
+}
+
+.batch-item.is-off .batch-item__text b {
+  text-decoration: line-through;
+  color: var(--ink-300);
+}
+
+.batch-item__pick {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  flex: none;
+}
+
+.batch-item__box {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 7px;
+  color: #fff;
+  background: var(--parent-600);
+  box-shadow: inset 0 0 0 1.5px var(--parent-600);
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+}
+
+.batch-item__box svg {
+  opacity: 1;
+  transition: opacity 0.14s;
+}
+
+.batch-item__pick[aria-pressed="false"] .batch-item__box {
+  color: transparent;
+  background: #fff;
+  box-shadow: inset 0 0 0 1.5px #c9d4e8;
+}
+
+.batch-item__art {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  color: var(--parent-700);
+  background: #fff;
+  box-shadow: inset 0 0 0 1px var(--parent-line);
+}
+
+.batch-item__art .costume-thumb {
+  width: 28px;
+  height: 28px;
+}
+
+.batch-item__text {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.batch-item__text b {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--parent-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.batch-item__text small {
+  font-size: 10px;
+  color: var(--ink-300);
+}
+
+.batch-item__cost {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--star-700);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sheet__summary {
+  display: grid;
+  gap: 6px;
+  margin: 2px 0 12px;
+  padding: 11px 13px;
+  border-radius: 14px;
+  background: #f7f9fe;
+  box-shadow: inset 0 0 0 1px var(--parent-line);
+  font-size: 12px;
+  color: var(--parent-900);
+}
+
+.sheet__summary li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sheet__summary b {
+  font-variant-numeric: tabular-nums;
+  color: var(--star-700);
+}
+
+@media (max-height: 700px) {
+  .shop-bar {
+    gap: 7px;
+    padding: 9px 11px 10px;
+  }
+
+  .shop-bar__clear,
+  .shop-bar__submit {
+    height: 40px;
+  }
+}

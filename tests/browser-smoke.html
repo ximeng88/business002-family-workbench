@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>B002 数据层冒烟测试</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { margin: 0; padding: 24px; font: 14px/1.6 ui-monospace, Consolas, monospace; background: #111; color: #e8e8e8; }
+      h1 { font-size: 16px; margin: 0 0 12px; }
+      #log { white-space: pre-wrap; background: #1b1b1b; border: 1px solid #333; border-radius: 8px; padding: 16px; min-height: 240px; }
+      .pass { color: #5bd65b; }
+      .fail { color: #ff6b6b; }
+      .info { color: #9ecbff; }
+    </style>
+  </head>
+  <body>
+    <h1>B002 数据层冒烟测试（真实浏览器）</h1>
+    <pre id="log">准备中…</pre>
+    <script type="module">
+      const logElement = document.getElementById("log")
+      const lines = []
+      let passCount = 0
+      let failCount = 0
+
+      function render() {
+        logElement.innerHTML = lines
+          .map((line) => `<span class="${line.level}">${line.text}</span>`)
+          .join("\n")
+      }
+
+      function info(text) {
+        lines.push({ level: "info", text })
+        render()
+      }
+
+      function check(condition, label, detail = "") {
+        if (condition) {
+          passCount += 1
+          lines.push({ level: "pass", text: `PASS ${label}${detail ? ` — ${detail}` : ""}` })
+        } else {
+          failCount += 1
+          lines.push({ level: "fail", text: `FAIL ${label}${detail ? ` — ${detail}` : ""}` })
+        }
+        render()
+      }
+
+      function summarize() {
+        const summary = `浏览器：${navigator.userAgent}\n结果：PASS ${passCount} / FAIL ${failCount}`
+        lines.push({ level: failCount === 0 ? "pass" : "fail", text: summary })
+        render()
+        window.__B002_SMOKE__ = { pass: passCount, fail: failCount, done: true }
+      }
+
+      let cleanup = null
+      try {
+        const { createFamilyDatabase, openDatabase, readSchemaVersion, closeDb } = await import(
+          "../src/db/database.js"
+        )
+        const { approveTask } = await import("../src/services/approval.service.js")
+        const { getBalance } = await import("../src/services/points.service.js")
+        const { default: Dexie } = await import("dexie")
+
+        const dbName = `b002_smoke_${Date.now()}`
+        const db = createFamilyDatabase(dbName)
+        cleanup = async () => {
+          try {
+            closeDb()
+          } catch {}
+          try {
+            db.close()
+          } catch {}
+          await Dexie.delete(dbName)
+        }
+
+        info(`数据库：${dbName}`)
+        await openDatabase(db)
+        check(db.isOpen(), "打开数据库")
+        check((await readSchemaVersion(db)) === 1, "库内 schemaVersion = 1")
+        check(db.tables.length === 12, "表数量为 12（11 张业务表 + _meta）", String(db.tables.length))
+
+        await db.children.add({ id: "c_smoke", nickname: "冒烟测试", avatarKey: "cat", hasChildPin: false, createdAt: new Date().toISOString() })
+        const child = await db.children.get("c_smoke")
+        check(child?.nickname === "冒烟测试", "写入并读回孩子记录")
+
+        await db.tasks.add({
+          id: "t_smoke",
+          childId: "c_smoke",
+          title: "冒烟任务",
+          points: 10,
+          type: "daily",
+          status: "submitted",
+          dueDate: "2026-11-18",
+          generationKey: "daily:c_smoke:smoke:2026-11-18",
+          submittedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+        })
+        const taskBefore = await db.tasks.get("t_smoke")
+        check(taskBefore?.status === "submitted", "写入并读回任务（待家长确认）")
+
+        const now = new Date()
+        const result = await approveTask({ taskId: "t_smoke", now, db })
+        check(result.status === "approved", "审核通过事务执行", `approvalDate=${result.approvalDate}`)
+
+        const taskAfter = await db.tasks.get("t_smoke")
+        check(taskAfter.status === "approved", "tasks 表状态改为已通过")
+        check(taskAfter.approvalDate === result.approvalDate, "tasks 表记录实际审核日期", taskAfter.approvalDate)
+
+        const reviews = await db.reviews.toArray()
+        check(reviews.length === 1 && reviews[0].eventKey === "approval:t_smoke", "reviews 表写入一条审核记录")
+
+        const ledger = await db.pointLedger.toArray()
+        check(ledger.length === 1 && ledger[0].delta === 10, "pointLedger 表写入积分流水 +10")
+
+        const pet = await db.petProgress.toArray()
+        check(pet.length === 1 && pet[0].delta === 10, "petProgress 表写入经验流水（独立账本）")
+
+        const streak = await db.streaks.get(`c_smoke:${result.approvalDate}`)
+        check(streak?.approvedCount === 1, "streaks 表按实际审核日期记账")
+
+        const balance = await getBalance("c_smoke", db)
+        check(balance.balance === 10, "积分余额由流水汇总 = 10", String(balance.balance))
+
+        const again = await approveTask({ taskId: "t_smoke", now, db })
+        check(again.status === "duplicate", "重复审核被拦截", again.status)
+        check((await db.pointLedger.count()) === 1, "重复审核未重复发放积分")
+        check((await db.reviews.count()) === 1, "重复审核未重复写审核记录")
+
+        await cleanup()
+        cleanup = null
+        check(true, "清理冒烟数据库")
+      } catch (error) {
+        failCount += 1
+        const code = error?.code ? `${error.code} ` : ""
+        lines.push({ level: "fail", text: `FAIL 未捕获异常：${code}${error?.name}: ${error?.message}` })
+        render()
+      } finally {
+        if (cleanup) {
+          try {
+            await cleanup()
+          } catch (error) {
+            lines.push({ level: "info", text: `清理失败（不影响测试结论）：${error?.message}` })
+          }
+        }
+        summarize()
+      }
+    </script>
+  </body>
+</html>

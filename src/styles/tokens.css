@@ -1,0 +1,91 @@
+/**
+ * 设计 Token — DEV-B002-008 全面 UI 重构
+ * 面向 6–11 岁儿童：明亮、圆润、有触感。
+ * 仅浅色模式；不使用深色变量。
+ */
+:root {
+  color-scheme: light;
+
+  /* ---------- 纸张与表面 ---------- */
+  --bg-warm: #fff8f0;
+  --bg-cool: #f1f6ff;
+  --surface: #ffffff;
+  --surface-warm: #fffaf3;
+  --surface-sunk: #fbf5ec;
+
+  /* ---------- 孩子端主色：蜜橘 ---------- */
+  --orange-50: #fff2e6;
+  --orange-100: #ffe0c4;
+  --orange-400: #ffa057;
+  --orange-500: #ff8a3d;
+  --orange-600: #f2701b;
+  --orange-700: #c9540c;
+
+  /* ---------- 辅助色 ---------- */
+  --blue-50: #eaf3ff;
+  --blue-100: #d3e6ff;
+  --blue-500: #4c9aff;
+  --blue-600: #2f7ce8;
+
+  --green-50: #e3fbf1;
+  --green-100: #c2f4e0;
+  --green-500: #1fc08a;
+  --green-600: #12a373;
+
+  --purple-50: #f0edff;
+  --purple-100: #ded7ff;
+  --purple-500: #8b7cff;
+  --purple-600: #7059ef;
+
+  --pink-50: #ffeef4;
+  --pink-100: #ffd7e4;
+  --pink-500: #ff7aa8;
+
+  --star-100: #fff2c9;
+  --star-300: #ffd75e;
+  --star-500: #ffc531;
+  --star-700: #d99a00;
+
+  /* ---------- 文本 ---------- */
+  --ink-900: #2a241d;
+  --ink-700: #554b3f;
+  --ink-500: #857a6c;
+  --ink-300: #b3a897;
+  --line: #f1e6d8;
+  --line-strong: #e6d7c4;
+
+  /* ---------- 家长端：静蓝 ---------- */
+  --parent-900: #16233c;
+  --parent-700: #2f5fd0;
+  --parent-600: #3a6ee0;
+  --parent-50: #eaf0ff;
+  --parent-line: #dde6f7;
+  --parent-danger: #d64545;
+  --parent-danger-soft: #fdeaea;
+
+  /* ---------- 字体 ---------- */
+  --font-round: "PingFang SC", "HarmonyOS Sans SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  --font-num: "SF Pro Rounded", "PingFang SC", ui-rounded, system-ui, sans-serif;
+
+  /* ---------- 圆角 ---------- */
+  --r-xs: 10px;
+  --r-sm: 14px;
+  --r-md: 20px;
+  --r-lg: 26px;
+  --r-xl: 34px;
+  --r-pill: 999px;
+
+  /* ---------- 阴影：柔和、偏暖 ---------- */
+  --shadow-1: 0 2px 8px rgba(154, 112, 62, 0.06);
+  --shadow-2: 0 12px 26px -14px rgba(150, 102, 48, 0.36);
+  --shadow-3: 0 26px 54px -22px rgba(140, 92, 40, 0.42);
+  --shadow-inset: inset 0 -3px 0 rgba(0, 0, 0, 0.06);
+  --shadow-parent: 0 1px 2px rgba(22, 35, 60, 0.06), 0 8px 20px -14px rgba(22, 35, 60, 0.28);
+
+  /* ---------- 布局 ---------- */
+  --shell-max: 480px;
+  --tabbar-h: 68px;
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 0.8, 0.3, 1);
+}

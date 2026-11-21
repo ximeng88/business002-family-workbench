@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.shots/
+.workbuddy/
+*.log
+*.crdownload
+*.local
+.DS_Store

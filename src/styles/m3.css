@@ -1,0 +1,636 @@
+/**
+ * M3 样式：家长 PIN 门控、设置页、备份 / 恢复、固定任务、安全区适配。
+ * 叠在 m2.css 之后加载，只新增类；家长端沿用静蓝，孩子端沿用蜜橘。
+ */
+
+/* ---------------- 家长端六个 Tab ---------------- */
+
+body[data-mode="parent"] .tabbar {
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1px;
+}
+
+body[data-mode="parent"] .tab__label {
+  font-size: 9px;
+}
+
+body[data-mode="parent"] .tab__badge {
+  margin-right: -12px;
+}
+
+/* 顶栏「退出家长」：图标 + 文字 */
+.ghost-pill--exit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 11px;
+  font-size: 12px;
+}
+
+/* ---------------- 安全区（iPhone 刘海 / 底部横条） ---------------- */
+
+.topbar {
+  /* viewport-fit=cover 下，独立窗口模式里内容会顶到刘海里 */
+  padding-top: calc(14px + env(safe-area-inset-top));
+}
+
+.sheet {
+  /* 备份导入确认这类长弹层：小屏 / 横屏下不再把按钮顶出屏幕，超出就内部滚动 */
+  max-height: calc(100vh - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+}
+
+.sheet::-webkit-scrollbar {
+  display: none;
+}
+
+.keypad {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ---------------- PIN 键盘弹层 ---------------- */
+
+.pin-gate {
+  padding: 4px 0 0;
+}
+
+.pin-gate.is-shake {
+  animation: pin-shake 0.4s var(--ease-out, ease);
+}
+
+@keyframes pin-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+
+.pin-dots {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 6px 0 2px;
+}
+
+.pin-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--parent-line);
+  transition: background 0.18s, box-shadow 0.18s, transform 0.18s var(--ease-spring);
+}
+
+.pin-dot.is-filled {
+  background: var(--parent-700);
+  box-shadow: inset 0 0 0 2px var(--parent-700);
+  transform: scale(1.06);
+}
+
+.pin-gate__msg {
+  min-height: 20px;
+  padding: 8px 0 2px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--ink-500);
+}
+
+.pin-gate__msg.is-warn {
+  color: var(--parent-danger);
+  font-weight: 600;
+}
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 10px 0 2px;
+}
+
+.keypad__key {
+  height: 52px;
+  border-radius: 16px;
+  font-family: var(--font-num);
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--parent-900);
+  background: var(--surface-sunk);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  transition: transform 0.14s var(--ease-spring), background 0.18s;
+}
+
+.keypad__key:active {
+  transform: scale(0.95);
+  background: var(--parent-50);
+}
+
+.keypad__key--ghost {
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: var(--ink-500);
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ---------------- PIN 输入框 ---------------- */
+
+.input--pin {
+  font-family: var(--font-num);
+  font-size: 22px;
+  letter-spacing: 8px;
+  text-align: center;
+  text-indent: 8px;
+}
+
+.set-pin-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 6px 0 2px;
+}
+
+/* ---------------- 设置页 ---------------- */
+
+.page--settings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.set-card {
+  padding: 16px 16px 14px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-parent);
+}
+
+.set-card--flat {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--parent-line);
+}
+
+.set-card.is-warn {
+  box-shadow:
+    var(--shadow-parent),
+    inset 0 0 0 1.5px var(--orange-100);
+}
+
+.set-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.set-card__head > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.set-card__head h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--parent-900);
+}
+
+.set-card__head p {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-500);
+}
+
+.set-card__ico {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  color: var(--ink-500);
+  background: var(--surface-sunk);
+}
+
+.set-card__ico--ok {
+  color: var(--green-600);
+  background: var(--green-50);
+}
+
+.set-card__ico--blue {
+  color: var(--parent-700);
+  background: var(--parent-50);
+}
+
+.set-card__ico--orange {
+  color: var(--orange-700);
+  background: var(--orange-50);
+}
+
+.set-card__ico--green {
+  color: var(--green-600);
+  background: var(--green-50);
+}
+
+.set-badge {
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 9px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--ink-500);
+  background: var(--surface-sunk);
+  white-space: nowrap;
+}
+
+.set-badge.is-on {
+  color: var(--green-600);
+  background: var(--green-50);
+}
+
+.set-badge.is-late {
+  color: var(--orange-700);
+  background: var(--orange-50);
+}
+
+.set-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.set-actions--stack {
+  flex-direction: column;
+  gap: 8px;
+}
+
+.set-actions--stack .btn {
+  justify-content: center;
+}
+
+.set-hint {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ink-500);
+}
+
+.set-hint svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.set-stat {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.set-stat li {
+  padding: 8px 6px;
+  border-radius: 12px;
+  text-align: center;
+  background: var(--surface-sunk);
+}
+
+.set-stat strong {
+  display: block;
+  font-family: var(--font-num);
+  font-size: 15px;
+  color: var(--parent-900);
+}
+
+.set-stat span {
+  font-size: 10.5px;
+  color: var(--ink-500);
+}
+
+.set-dl {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.set-dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.set-dl dt {
+  color: var(--ink-500);
+}
+
+.set-dl dd {
+  color: var(--parent-900);
+  font-weight: 600;
+  text-align: right;
+  word-break: break-all;
+}
+
+.set-dl--sheet {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--surface-sunk);
+}
+
+.set-pin-form {
+  margin-top: 12px;
+}
+
+.set-pin-form .btn {
+  margin-top: 12px;
+}
+
+.set-install__tip,
+.set-install__done {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--ink-700);
+  background: var(--surface-sunk);
+}
+
+.set-install__done {
+  color: var(--green-600);
+  background: var(--green-50);
+  font-weight: 600;
+}
+
+/* 说明文字里的强调不要做成链接色，否则家长会以为能点 */
+.set-install__tip b {
+  color: inherit;
+}
+
+.set-install__tip + .btn--block {
+  margin-top: 10px;
+}
+
+/* 「看安装步骤」弹层：按设备给出可照做的三步 */
+.install-help {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+
+.install-help__row {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--surface-sunk);
+}
+
+.install-help__title {
+  display: block;
+  font-size: 12.5px;
+  color: var(--parent-700);
+}
+
+.install-help__row p {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-600);
+}
+
+.set-exit {
+  margin-top: 4px;
+  justify-content: center;
+}
+
+/* 导入确认：警告块 + 勾选 */
+.import-warn {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #8a2320;
+  background: var(--parent-danger-soft);
+}
+
+.import-warn svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--parent-900);
+  background: var(--surface-sunk);
+  cursor: pointer;
+}
+
+.check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--parent-700);
+}
+
+.check-row:has(input:checked) {
+  background: var(--parent-50);
+}
+
+/* 小屏 / 横屏：把导入确认弹层的次要信息压紧，让「覆盖并恢复」不必滚动就可见 */
+@media (max-height: 700px) {
+  .sheet__head {
+    padding-bottom: 8px;
+  }
+
+  .import-warn {
+    margin-top: 10px;
+    padding: 8px 10px;
+  }
+
+  .set-dl--sheet {
+    margin-top: 10px;
+    padding: 8px 10px;
+    gap: 4px;
+  }
+
+  .check-row {
+    margin-top: 10px;
+    padding: 8px 10px;
+  }
+
+  .sheet__form .btn {
+    margin-top: 10px;
+  }
+}
+
+/* ---------------- 固定任务：重复方式 ---------------- */
+
+.segmented--tight {
+  margin-top: 8px;
+}
+
+.repeat-view {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--parent-700);
+}
+
+.weekday-picker {
+  margin-top: 12px;
+}
+
+.weekday-picker[hidden] {
+  display: none;
+}
+
+.weekday-picker__row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.weekday {
+  height: 38px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-500);
+  background: var(--surface-sunk);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  transition: transform 0.14s var(--ease-spring), background 0.18s, color 0.18s;
+}
+
+.weekday:active {
+  transform: scale(0.94);
+}
+
+.weekday.is-active {
+  color: #fff;
+  background: var(--parent-700);
+  box-shadow: none;
+}
+
+/* ---------------- 固定任务列表 ---------------- */
+
+.tpl-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: 15px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1.5px var(--parent-line);
+}
+
+.tpl-row.is-off {
+  opacity: 0.62;
+}
+
+.tpl-row__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  color: var(--parent-700);
+  background: var(--parent-50);
+}
+
+.tpl-row__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.tpl-row__body strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink-900);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tpl-row__body small {
+  display: block;
+  margin-top: 1px;
+  font-size: 11px;
+  color: var(--ink-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tpl-row__ctrl {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mini-btn--danger {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  padding: 0;
+  color: var(--ink-500);
+  background: var(--surface-sunk);
+}
+
+.mini-btn--danger:active {
+  color: var(--parent-danger);
+}
+
+/* 任务行上的「固定」小标签 */
+.assign-row__tag {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--parent-700);
+  background: var(--parent-50);
+  vertical-align: 1px;
+}
+
+/* ---------------- 小屏适配 ---------------- */
+
+@media (max-width: 360px) {
+  body[data-mode="parent"] .tab__label {
+    font-size: 8.5px;
+  }
+
+  .keypad__key {
+    height: 46px;
+    font-size: 19px;
+  }
+
+  .set-stat strong {
+    font-size: 13.5px;
+  }
+
+  .weekday {
+    height: 34px;
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,878 @@
+/**
+ * M1 新增页面与组件样式：多孩切换、布置任务、孩子管理、退回、逾期分组。
+ * 叠在 pages.css 之后加载，只覆盖需要覆盖的少量规则，不改旧结构。
+ */
+
+/* ---------------- 头部可点击（换孩子入口） ---------------- */
+
+.who--button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  border-radius: 16px;
+}
+
+.who--button:active .who__avatar {
+  transform: scale(0.96);
+}
+
+.who__text,
+.who__name {
+  display: block;
+}
+
+.who__switch {
+  margin-left: 3px;
+  vertical-align: -2px;
+  color: var(--ink-300);
+}
+
+/* svg 在 base.css 里是 display:block，放进标题会把箭头挤到下一行 */
+.who__name .icon,
+.who__switch {
+  display: inline-block;
+}
+
+/* Hero 的装饰光斑在 ::after 上，进度环需要压到它上面 */
+.hero .ring {
+  position: relative;
+  z-index: 2;
+}
+
+/* 进度环数字：pages.css 用 baseline 对齐会把整行顶到环的上沿，这里改成居中 */
+.ring__label {
+  display: grid;
+  grid-auto-flow: column;
+  place-content: center;
+  align-items: baseline;
+  gap: 1px;
+}
+
+/* 家长端四个 Tab */
+body[data-mode="parent"] .tabbar {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+body[data-mode="parent"] .tab {
+  height: 52px;
+}
+
+body[data-mode="parent"] .tab__label {
+  font-size: 10.5px;
+}
+
+body[data-mode="parent"] .tab__badge {
+  margin-right: -18px;
+}
+
+/* ---------------- Hero：连续天数 / 进度胶囊 ---------------- */
+
+.hero__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.hero__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 25px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  white-space: nowrap;
+}
+
+.hero__pill--streak {
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.hero__pill--soft {
+  opacity: 0.9;
+}
+
+/* ---------------- 任务分组 / 逾期折叠 ---------------- */
+
+.task-group {
+  margin-top: 16px;
+}
+
+.task-group .task-list {
+  margin-top: 0;
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 4px 8px;
+  color: var(--ink-300);
+}
+
+.group-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-700);
+}
+
+.group-head h2 svg {
+  color: var(--orange-500);
+}
+
+.group-head > span {
+  font-size: 11.5px;
+  color: var(--ink-300);
+}
+
+.group-head__toggle {
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-500);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: var(--shadow-1);
+}
+
+.overdue-toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 18px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-500);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+
+.overdue-toggle:active {
+  transform: scale(0.99);
+}
+
+.overdue-toggle__ico {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  color: var(--orange-600);
+  background: var(--orange-50);
+  flex: none;
+}
+
+.overdue-toggle > svg:last-child {
+  margin-left: auto;
+  color: var(--ink-300);
+}
+
+.task__late {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--orange-700);
+  background: #fff1e2;
+  vertical-align: 1px;
+}
+
+/* ---------------- 家长确认：四格总览 / 孩子切换带 ---------------- */
+
+.kid-strip {
+  display: flex;
+  gap: 8px;
+  margin: 2px 0 11px;
+  padding: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.kid-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.kid-strip--inline {
+  margin: 0;
+  padding: 0;
+}
+
+.kid-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 13px 0 9px;
+  flex: none;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--parent-900);
+  background: #fff;
+  box-shadow: var(--shadow-parent);
+  transition: background 0.22s, color 0.22s, transform 0.16s var(--ease-spring);
+}
+
+.kid-chip:active {
+  transform: scale(0.97);
+}
+
+.kid-chip__avatar {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.kid-chip.is-active {
+  color: #fff;
+  background: linear-gradient(160deg, #4a7ef0, var(--parent-700));
+  box-shadow: 0 12px 22px -14px rgba(28, 63, 158, 0.9);
+}
+
+.kid-chip__badge {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  color: #fff;
+  background: var(--parent-danger);
+}
+
+.kid-chip.is-active .kid-chip__badge {
+  color: var(--parent-700);
+  background: #fff;
+}
+
+.parent-stats--four {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+
+.parent-stats--four .parent-stat {
+  padding: 10px 4px;
+}
+
+.parent-stats--four .parent-stat strong {
+  font-size: 17px;
+}
+
+.parent-stats--four .parent-stat span {
+  font-size: 10.5px;
+}
+
+.parent-stat--hot {
+  background: #fff7f7;
+  box-shadow: inset 0 0 0 1.5px #ffe3e3, var(--shadow-parent);
+}
+
+.parent-stat--hot strong {
+  color: var(--parent-danger);
+}
+
+.review__late {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--parent-danger);
+  background: var(--parent-danger-soft);
+  vertical-align: 2px;
+}
+
+.queue-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 11px 13px;
+  border-radius: 16px;
+  font-size: 12.5px;
+  color: var(--parent-700);
+  background: var(--parent-50);
+}
+
+.review__quote--sheet {
+  margin: 0 0 14px;
+}
+
+/* ---------------- 退回面板 ---------------- */
+
+.reason-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.reason-chip {
+  height: 30px;
+  padding: 0 11px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--parent-700);
+  background: var(--parent-50);
+}
+
+.reason-chip:active {
+  transform: scale(0.96);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--reject.btn--block {
+  margin-top: 14px;
+  height: 52px;
+  font-size: 15.5px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1.5px #f6d5d5;
+}
+
+/* ---------------- 换孩子面板 ---------------- */
+
+.switch-list {
+  display: grid;
+  gap: 8px;
+}
+
+.switch-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 18px;
+  text-align: left;
+  background: var(--surface-sunk);
+}
+
+.switch-item.is-active {
+  background: #fff7ef;
+  box-shadow: inset 0 0 0 1.5px var(--orange-100);
+}
+
+.switch-item__avatar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border-radius: 14px;
+  font-size: 23px;
+  line-height: 1;
+  background: #fff;
+  box-shadow: var(--shadow-1);
+}
+
+.switch-item__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.switch-item__body strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.switch-item__body small {
+  font-size: 11.5px;
+  color: var(--ink-500);
+}
+
+.switch-item__now {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--orange-600);
+  white-space: nowrap;
+}
+
+.switch-hint {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--ink-500);
+  text-align: center;
+}
+
+.switch-list + .btn--block,
+.sheet .btn--ghost.btn--block {
+  margin-top: 14px;
+}
+
+/* ---------------- 布置任务 ---------------- */
+
+.assign-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.form-card {
+  padding: 14px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: var(--shadow-parent);
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.form-row .form-label {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-700);
+}
+
+.input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border-radius: 15px;
+  font-size: 16px;
+  color: var(--ink-900);
+  background: var(--surface-sunk);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.input::placeholder {
+  color: var(--ink-300);
+}
+
+.input:focus {
+  background: #fff;
+  box-shadow: inset 0 0 0 2px var(--orange-400);
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.preset {
+  height: 30px;
+  padding: 0 11px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-700);
+  background: var(--surface-sunk);
+}
+
+.preset:active {
+  transform: scale(0.96);
+}
+
+.points-view {
+  font-size: 12.5px;
+  color: var(--ink-500);
+}
+
+.points-view b {
+  margin: 0 2px;
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+  color: var(--orange-600);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stepper__btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 14px;
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--orange-700);
+  background: var(--orange-50);
+  transition: transform 0.14s var(--ease-spring);
+}
+
+.stepper__btn:active {
+  transform: scale(0.93);
+}
+
+.stepper__hint {
+  flex: 1;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--ink-300);
+}
+
+.segment {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 16px;
+  background: var(--surface-sunk);
+}
+
+.segment__btn {
+  height: 42px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-500);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.segment__btn.is-active {
+  color: var(--parent-700);
+  background: #fff;
+  box-shadow: var(--shadow-parent);
+}
+
+.assign-list {
+  margin-top: 18px;
+}
+
+.assign-list__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 8px;
+}
+
+.assign-list__head h2 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-700);
+}
+
+.assign-list__head span {
+  font-size: 11.5px;
+  color: var(--ink-300);
+}
+
+.assign-list__items {
+  display: grid;
+  gap: 7px;
+}
+
+.assign-list__empty {
+  padding: 16px;
+  border-radius: 18px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--ink-500);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+
+.assign-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--shadow-parent);
+}
+
+.assign-row__icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 11px;
+}
+
+.assign-row__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.assign-row__points {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--star-700);
+}
+
+.assign-row__state {
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-500);
+  background: var(--surface-sunk);
+  white-space: nowrap;
+}
+
+.assign-row__state--submitted {
+  color: var(--parent-700);
+  background: var(--parent-50);
+}
+
+.assign-row__state--approved {
+  color: var(--green-600);
+  background: var(--green-50);
+}
+
+.assign-row__state--revision {
+  color: var(--parent-danger);
+  background: var(--parent-danger-soft);
+}
+
+/* ---------------- 孩子管理 ---------------- */
+
+.kid-cards {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.kid-card {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: var(--shadow-parent);
+}
+
+.kid-card.is-active {
+  box-shadow: inset 0 0 0 2px var(--parent-600), var(--shadow-parent);
+}
+
+.kid-card__avatar {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex: none;
+  border-radius: 18px;
+  font-size: 27px;
+  line-height: 1;
+  background: var(--surface-sunk);
+}
+
+.kid-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.kid-card__body h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15.5px;
+  font-weight: 700;
+}
+
+.kid-card__now {
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--parent-600);
+}
+
+.kid-card__body p {
+  margin-top: 4px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-500);
+}
+
+.kid-card__bar {
+  margin-top: 8px;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--surface-sunk);
+}
+
+.kid-card__bar i {
+  display: block;
+  height: 100%;
+  width: calc(var(--to) * 100%);
+  border-radius: 3px;
+  background: linear-gradient(90deg, #5b8dfa, var(--parent-700));
+  transition: width 0.5s var(--ease-out);
+}
+
+.kid-card__tail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1px;
+  flex: none;
+  min-width: 52px;
+}
+
+.kid-card__tail strong {
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+  color: var(--star-700);
+}
+
+.kid-card__tail span {
+  font-size: 10px;
+  color: var(--ink-300);
+}
+
+.kid-card__switch {
+  margin-top: 6px;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: var(--r-pill);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--parent-700);
+  background: var(--parent-50);
+}
+
+.kid-card__flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--green-600);
+}
+
+.add-child {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: var(--shadow-parent);
+}
+
+.add-child h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--parent-900);
+}
+
+.add-child > p {
+  margin-bottom: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-500);
+}
+
+.add-child .form-label {
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+.add-child .btn {
+  margin-top: 8px;
+}
+
+.avatar-picker {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.avatar-opt {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 13px;
+  font-size: 20px;
+  line-height: 1;
+  background: var(--surface-sunk);
+  box-shadow: inset 0 0 0 1.5px transparent;
+  transition: transform 0.16s var(--ease-spring), box-shadow 0.2s, background 0.2s;
+}
+
+.avatar-opt.is-active {
+  background: #fff7ef;
+  box-shadow: inset 0 0 0 2px var(--orange-400);
+  transform: translateY(-1px);
+}
+
+/* ---------------- 小屏 ---------------- */
+
+@media (max-width: 360px) {
+  .parent-stats--four {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .kid-card__avatar {
+    width: 46px;
+    height: 46px;
+    font-size: 24px;
+  }
+
+  .hero__pill {
+    font-size: 10.5px;
+    padding: 0 8px;
+  }
+
+  .avatar-picker {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .avatar-opt {
+    font-size: 22px;
+  }
+}
