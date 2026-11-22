@@ -4,8 +4,8 @@ import { defineConfig } from "vite"
 const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"))
 
 export default defineConfig({
-  // 使用相对路径，便于部署到静态托管的任意子路径
-  base: "./",
+  // GitHub Pages 子路径部署：产物内所有资源路径都带 /business002-family-workbench/ 前缀
+  base: "/business002-family-workbench/",
   // 版本号只有一个来源：package.json。设置页显示它，方便真机确认装的是哪一版
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
