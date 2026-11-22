@@ -9,6 +9,7 @@
 
 import { icon } from "../icons.js"
 import { costumeThumb } from "../pet.js"
+import { costFieldMarkup } from "../costField.js"
 import { REWARD_ICON_KEYS } from "../../services/reward.service.js"
 import { state } from "../store.js"
 import { escapeHtml } from "../ui.js"
@@ -84,7 +85,7 @@ export function renderRewards() {
       <div class="parent-hero__text">
         <p class="parent-hero__kicker">家庭设置 · 共 ${all.length} 个奖励</p>
         <h2>奖励由你定价</h2>
-        <p class="parent-hero__sub">内置奖励只是建议价，改成你觉得合适的数字；不想给的时候可以停用，停用不删除历史。</p>
+        <p class="parent-hero__sub">内置奖励只是建议价，改成你觉得合适的数字（1–10000 任意整数都行，不用凑整）；不想给的时候可以停用，停用不删除历史。</p>
       </div>
       <span class="parent-hero__shield" aria-hidden="true">${icon("starSolid", { size: 30 })}</span>
     </div>
@@ -135,16 +136,8 @@ export function renderRewards() {
             ${iconPicker()}
             <input type="hidden" name="iconKey" value="sparkle" data-reward-icon-input />
 
-            <div class="form-row">
-              <span class="form-label">要多少星星</span>
-              <span class="points-view"><b data-cost-value>30</b> 颗</span>
-            </div>
-            <input type="hidden" name="cost" value="30" data-cost-input />
-            <div class="stepper">
-              <button class="stepper__btn" type="button" data-cost-step="-10" aria-label="减少 10 颗星星">−</button>
-              <span class="stepper__hint">10 颗一档 · 最多 300</span>
-              <button class="stepper__btn" type="button" data-cost-step="10" aria-label="增加 10 颗星星">＋</button>
-            </div>
+            <span class="form-label">要多少星星</span>
+            ${costFieldMarkup({ id: "reward-cost", value: 30 })}
 
             <button class="btn btn--primary btn--xl" type="submit">添加奖励</button>
           </form>`

@@ -244,6 +244,19 @@ export function validateBackupPayload(payload) {
   const children = payload.data[TABLE_NAMES.CHILDREN]
   if (children.length === 0) throw fail("备份里没有任何孩子，不像是正常的家庭数据")
 
+  // 头像图片（M6）：只认 data:image/{jpeg,png,webp};base64。
+  // 这条不只是"格式检查"——它挡住了把 `"><script>` 之类塞进 avatarImage、
+  // 再借界面渲染执行的路径（备份文件可能是别人给的）。
+  for (const child of children) {
+    if (child.avatarImage === undefined || child.avatarImage === null || child.avatarImage === "") continue
+    if (
+      typeof child.avatarImage !== "string" ||
+      !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(child.avatarImage)
+    ) {
+      throw fail("有孩子的头像数据不是图片，这份备份可能被改过", { childId: child.id ?? null })
+    }
+  }
+
   const childIds = new Set(children.map((child) => child.id))
   const taskIds = new Set(payload.data[TABLE_NAMES.TASKS].map((task) => task.id))
   const redemptionIds = new Set(payload.data[TABLE_NAMES.REDEMPTIONS].map((redemption) => redemption.id))

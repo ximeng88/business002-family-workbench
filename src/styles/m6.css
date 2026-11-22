@@ -1,0 +1,636 @@
+/**
+ * M6 样式：孩子资料、头像上传与裁剪、积分自由输入、五种伙伴。
+ *
+ * 两条纪律：
+ * 1. 新增样式一律写在独立文件，不改 m1–m5 —— 那几轮已有截图证据，
+ *    改一个像素就要重拍，得不偿失；
+ * 2. 头像尺寸由**容器**决定（`.avatar-view` 默认撑满父元素），
+ *    只有独立使用的场景（资料弹层 96px）才用显式尺寸类。
+ */
+
+/* ============ 头像统一渲染 ============ */
+
+.avatar-view {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+  font-size: 1em;
+  line-height: 1;
+}
+
+.avatar-view__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.avatar-view__emoji {
+  font-size: 1em;
+  line-height: 1;
+  transform: translateY(1px);
+}
+
+/* 独立使用时的字号（宽高仍由容器或下面的显式尺寸给） */
+.avatar-view--xs {
+  font-size: 17px;
+}
+
+.avatar-view--sm {
+  font-size: 22px;
+}
+
+.avatar-view--md {
+  font-size: 26px;
+}
+
+.avatar-view--xl {
+  width: 92px;
+  height: 92px;
+  font-size: 48px;
+}
+
+/* 原有容器里塞进 avatar-view 后需要补的几处 */
+.kid-chip__avatar {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  font-size: 1em;
+}
+
+.redeem__art {
+  font-size: 24px;
+  overflow: hidden;
+}
+
+/* ============ 孩子端「我的资料」小卡 ============ */
+
+.me-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 11px 14px 11px 11px;
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+.me-card__avatar {
+  width: 50px;
+  height: 50px;
+  flex: none;
+  border-radius: 17px;
+  background: var(--orange-50);
+  font-size: 26px;
+}
+
+.me-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.me-card__body strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-900);
+  letter-spacing: -0.2px;
+}
+
+.me-card__body span {
+  display: block;
+  margin-top: 1px;
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+/* ============ 宠物舞台：物种名 + 换伙伴 ============ */
+
+.pet-stage__switch {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9);
+  color: var(--ink-500);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.pet-stage__switch:active {
+  transform: scale(0.96);
+}
+
+.pet-stage__species {
+  margin: -2px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--orange-700);
+  letter-spacing: 0.3px;
+}
+
+/* ============ 资料弹层 ============ */
+
+.profile-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  margin: 4px 0 16px;
+}
+
+.profile-head__avatar {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--orange-50);
+  box-shadow:
+    inset 0 0 0 3px #fff,
+    0 14px 26px -16px rgba(190, 120, 40, 0.85);
+  cursor: pointer;
+}
+
+.profile-head__avatar:active {
+  transform: scale(0.97);
+}
+
+.profile-head__cam {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: var(--orange-500);
+  color: #fff;
+}
+
+.profile-head__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.field__err {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--parent-danger);
+}
+
+.field__err[hidden] {
+  display: none;
+}
+
+.input.is-invalid {
+  color: var(--parent-danger);
+}
+
+/* ============ 头像来源 ============ */
+
+.source-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 16px;
+}
+
+.source {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 13px 11px 11px;
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  background: #fff;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.source:active {
+  background: var(--surface-warm);
+}
+
+.source__ico {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 13px;
+}
+
+.source__ico--o {
+  background: var(--orange-50);
+  color: var(--orange-600);
+}
+
+.source__ico--g {
+  background: var(--green-50);
+  color: var(--green-600);
+}
+
+.source__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.source__body b {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.source__body span {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.source > .icon {
+  flex: none;
+  color: var(--ink-300);
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+}
+
+.preset {
+  display: grid;
+  place-items: center;
+  height: 52px;
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.preset.is-on {
+  border-color: var(--orange-500);
+  background: var(--orange-50);
+  box-shadow: inset 0 0 0 1px var(--orange-500);
+}
+
+/* 家长端打开同一个弹层时换成静蓝，避免"家长端突然一片橘" */
+body[data-mode="parent"] .profile-head__avatar {
+  background: var(--parent-50);
+  box-shadow:
+    inset 0 0 0 3px #fff,
+    0 14px 26px -16px rgba(47, 95, 208, 0.5);
+}
+
+body[data-mode="parent"] .profile-head__cam {
+  background: var(--parent-600);
+}
+
+body[data-mode="parent"] .preset.is-on {
+  border-color: var(--parent-600);
+  background: var(--parent-50);
+  box-shadow: inset 0 0 0 1px var(--parent-600);
+}
+
+body[data-mode="parent"] .source__ico--o {
+  background: var(--parent-50);
+  color: var(--parent-700);
+}
+
+/* ============ 裁剪 ============ */
+
+.crop-stage {
+  position: relative;
+  width: min(258px, 68vw);
+  aspect-ratio: 1;
+  margin: 6px auto 16px;
+}
+
+.crop-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 18px 34px -20px rgba(150, 102, 48, 0.55);
+  touch-action: none;
+  cursor: grab;
+}
+
+.crop-canvas:active {
+  cursor: grabbing;
+}
+
+.crop-ring {
+  position: absolute;
+  inset: -7px;
+  border: 2px dashed rgba(255, 138, 61, 0.42);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-300);
+}
+
+.crop-zoom__range {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--orange-500);
+}
+
+.crop-zoom__value {
+  min-width: 40px;
+  font-family: var(--font-num);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-700);
+  text-align: right;
+}
+
+.sheet__actions {
+  margin-top: 16px;
+}
+
+.sheet__actions--split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ============ 积分自由输入 ============ */
+
+.cost-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cost-step {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border: 0;
+  border-radius: 15px;
+  background: var(--surface-sunk);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  color: var(--ink-700);
+  font-family: var(--font-num);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cost-step:active {
+  transform: scale(0.95);
+  background: var(--orange-50);
+}
+
+.cost-field {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  height: 54px;
+  padding: 0 12px;
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  transition: box-shadow 0.2s;
+}
+
+.cost-field:focus-within {
+  box-shadow: inset 0 0 0 2px var(--orange-400);
+}
+
+.cost-input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-900);
+  font-family: var(--font-num);
+  font-size: 26px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: -0.5px;
+}
+
+.cost-input:focus {
+  outline: none;
+}
+
+.cost-input.is-invalid {
+  color: var(--parent-danger);
+}
+
+.cost-unit {
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-500);
+}
+
+.cost-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.cost-chip {
+  height: 32px;
+  min-width: 46px;
+  padding: 0 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-pill);
+  background: #fff;
+  color: var(--ink-700);
+  font-family: var(--font-num);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cost-chip.is-on {
+  border-color: var(--orange-500);
+  background: var(--orange-50);
+  color: var(--orange-700);
+}
+
+.cost-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--ink-500);
+}
+
+.cost-error {
+  margin: 5px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--parent-danger);
+}
+
+.cost-error[hidden] {
+  display: none;
+}
+
+/* 家长端页面里的积分输入跟孩子端配色无关，用静蓝焦点环 */
+body[data-mode="parent"] .cost-field:focus-within {
+  box-shadow: inset 0 0 0 2px var(--parent-600);
+}
+
+body[data-mode="parent"] .cost-step:active {
+  background: var(--parent-50);
+}
+
+body[data-mode="parent"] .cost-chip.is-on {
+  border-color: var(--parent-600);
+  background: var(--parent-50);
+  color: var(--parent-700);
+}
+
+/* ============ 五种伙伴 ============ */
+
+.pet-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.pet-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 8px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    transform 0.16s;
+}
+
+.pet-option:active {
+  transform: scale(0.98);
+}
+
+.pet-option.is-active {
+  border-color: var(--orange-500);
+  background: var(--orange-50);
+  box-shadow: inset 0 0 0 1px var(--orange-500);
+}
+
+.pet-option__art {
+  display: block;
+  width: 78px;
+}
+
+/* 选择页里五只同时待机太闹，静帧就够 */
+.pet-option__art.is-static .cat {
+  animation: none;
+}
+
+.pet-option__art.is-static .cat__tail,
+.pet-option__art.is-static .cat__ear,
+.pet-option__art.is-static .cat__eye {
+  animation: none;
+}
+
+.pet-option__name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.pet-option__now {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--orange-700);
+}
+
+/* ============ 家长端孩子卡片：改资料 ============ */
+
+.kid-card__edit {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: var(--surface-sunk);
+  color: var(--ink-500);
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.kid-card__edit:active {
+  background: var(--parent-50);
+  color: var(--parent-700);
+}
+
+@media (max-width: 360px) {
+  .pet-picker-grid {
+    gap: 8px;
+  }
+
+  .pet-option__art {
+    width: 66px;
+  }
+
+  .cost-input {
+    font-size: 23px;
+  }
+}

@@ -7,7 +7,8 @@
  * - 多个孩子时顶部有一条快速切换带。
  */
 
-import { avatarOf, icon, subjectOf } from "../icons.js"
+import { avatarMarkup } from "../avatar.js"
+import { icon, subjectOf } from "../icons.js"
 import { state, submissionOf } from "../store.js"
 import { describeTime, escapeHtml } from "../ui.js"
 
@@ -26,14 +27,13 @@ function kidStrip() {
     <div class="kid-strip" role="tablist" aria-label="切换孩子">
       ${state.children
         .map((child) => {
-          const avatar = avatarOf(child.avatarKey)
           const stat = state.childStats.find((row) => row.id === child.id)
           const pending = stat?.pending ?? 0
           const active = child.id === state.childId
           return `
             <button class="kid-chip ${active ? "is-active" : ""}" type="button"
               role="tab" aria-selected="${active}" data-switch-child="${escapeHtml(child.id)}">
-              <span class="kid-chip__avatar">${avatar.emoji}</span>
+              <span class="kid-chip__avatar">${avatarMarkup(child, { size: "xs" })}</span>
               <span class="kid-chip__name">${escapeHtml(child.nickname)}</span>
               ${pending > 0 ? `<span class="kid-chip__badge">${pending}</span>` : ""}
             </button>`

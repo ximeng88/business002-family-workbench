@@ -11,7 +11,8 @@
  * 老数据（M2 单件、没有 batchId）按"自己一批"处理，展示与操作完全兼容。
  */
 
-import { avatarOf, icon } from "../icons.js"
+import { avatarMarkup } from "../avatar.js"
+import { icon } from "../icons.js"
 import { costumeThumb } from "../pet.js"
 import { rewardById, state } from "../store.js"
 import { describeTime, escapeHtml } from "../ui.js"
@@ -78,7 +79,6 @@ function batchItemRow(row, index) {
 
 function batchCard(group, index) {
   const child = group.child
-  const avatar = avatarOf(child?.avatarKey)
   const nickname = child?.nickname ?? "孩子"
   const count = group.rows.length
   const bulk = count > 1
@@ -89,7 +89,7 @@ function batchCard(group, index) {
   return `
     <li class="redeem redeem--batch" data-batch-card="${escapeHtml(group.batchId)}" data-batch-ids="${escapeHtml(allIds)}" style="--i:${index}">
       <div class="redeem__head">
-        <span class="redeem__art">${avatar.emoji}</span>
+        <span class="redeem__art">${avatarMarkup(child, { size: "sm" })}</span>
         <div class="redeem__title">
           <h2>${bulk ? `${escapeHtml(nickname)}想换 ${count} 件` : escapeHtml(single.rewardNameSnapshot)}${
             // 单件不重复列明细，用类别标签补上下面的信息

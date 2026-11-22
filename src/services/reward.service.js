@@ -37,7 +37,16 @@ export const REWARD_CATEGORY_LABEL = Object.freeze({
 export const REWARD_NAME_MAX_LENGTH = 12
 export const REWARD_DESCRIPTION_MAX_LENGTH = 20
 export const REWARD_COST_MIN = 1
-export const REWARD_COST_MAX = 999
+/**
+ * 积分上限：999 → 10000（M6 / Q-M6-02）。
+ *
+ * 旧档位是"5 或 10 的倍数 + 最多 300"，家长只能把"值多少"改成"最接近的档"。
+ * 改成任意整数后上限提到 10000：既容得下"攒很久的大奖励"，
+ * 又能拦住手滑多按几个 0（10000 不是价格带，日常仍在 1–200）。
+ */
+export const REWARD_COST_MAX = 10000
+/** 快选档位只是输入捷径，**不是**唯一天然可选值；点了会填进输入框，仍可手改 */
+export const REWARD_COST_QUICK_PICKS = Object.freeze([5, 10, 20, 30, 50, 100])
 
 /** 自定义奖励可选的系统内置图标（不引入外部图标依赖） */
 export const REWARD_ICON_KEYS = Object.freeze([
@@ -174,6 +183,45 @@ function normalizeCost(cost) {
     )
   }
   return cost
+}
+
+/**
+ * 解析输入框里的原始文本（界面与写库共用同一套判断）。
+ *
+ * 纪律：**只判断，不纠正**。
+ * - `13.5` 不会偷偷取整成 14，只提示"只能填整数"；
+ * - `10001` 保留原样让家长自己改，不自动截断成 10000；
+ * - 前导零（`007`）是合法整数 7，不拦。
+ *
+ * @param {unknown} raw
+ * @returns {{ ok: true, value: number } | { ok: false, reason: "empty"|"negative"|"shape"|"min"|"max", message: string }}
+ */
+export function parseRewardCost(raw) {
+  const text = typeof raw === "string" ? raw.trim() : String(raw ?? "").trim()
+  if (text === "") {
+    return { ok: false, reason: "empty", message: `还没填数字，填一个 ${REWARD_COST_MIN} 到 ${REWARD_COST_MAX} 之间的整数` }
+  }
+  if (text.startsWith("-")) {
+    return { ok: false, reason: "negative", message: "积分不能是负数" }
+  }
+  if (/^\d+\.\d+$/.test(text) || /\.$/.test(text)) {
+    return { ok: false, reason: "decimal", message: "只能填整数，13.5 这种自己定一个整数（比如 14）" }
+  }
+  if (!/^\d+$/.test(text)) {
+    return { ok: false, reason: "shape", message: "这里只能填数字" }
+  }
+  const value = Number(text)
+  if (value < REWARD_COST_MIN) {
+    return { ok: false, reason: "min", message: "至少要 1 颗，0 颗就相当于白送了" }
+  }
+  if (value > REWARD_COST_MAX) {
+    return {
+      ok: false,
+      reason: "max",
+      message: `最多 ${REWARD_COST_MAX} 颗，检查一下是不是多打了几个 0`,
+    }
+  }
+  return { ok: true, value }
 }
 
 function normalizeIconKey(iconKey) {

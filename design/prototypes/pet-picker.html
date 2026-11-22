@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>设计稿 · 选择宠物（P-C3 子流程）</title>
+<style>
+  :root {
+    --bg-warm: #fff8f0; --surface: #fff; --surface-warm: #fffaf3; --surface-sunk: #fbf5ec;
+    --orange-50: #fff2e6; --orange-100: #ffe0c4; --orange-500: #ff8a3d; --orange-600: #f2701b; --orange-700: #c9540c;
+    --star-500: #ffc531; --green-500: #1fc08a;
+    --ink-900: #2a241d; --ink-700: #554b3f; --ink-500: #857a6c; --ink-300: #b3a897;
+    --line: #f1e6d8; --line-strong: #e6d7c4;
+    --r-sm: 14px; --r-md: 20px; --r-lg: 26px; --r-xl: 34px; --r-pill: 999px;
+    --shadow-1: 0 2px 8px rgba(154,112,62,.06); --shadow-2: 0 12px 26px -14px rgba(150,102,48,.36);
+    --font-round: "PingFang SC", "HarmonyOS Sans SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--font-round); background: var(--bg-warm); color: var(--ink-900);
+    font-variant-numeric: tabular-nums;
+    min-height: 100vh; display: flex; justify-content: center;
+  }
+  .phone { width: 100%; max-width: 430px; min-height: 932px; display: flex; flex-direction: column; position: relative; }
+
+  /* 顶栏 */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 6px; }
+  .topbar__back { display: inline-flex; align-items: center; gap: 6px; font-size: 16px; color: var(--ink-700); }
+  .topbar__back svg { width: 20px; height: 20px; }
+  .topbar__title { font-size: 16px; font-weight: 600; color: var(--ink-700); }
+  .topbar__ghost { width: 44px; }
+
+  .body { flex: 1; padding: 8px 20px 250px; }
+
+  .hero { padding: 8px 0 20px; }
+  .hero h1 { margin: 0 0 8px; font-size: 26px; line-height: 34px; font-weight: 800; letter-spacing: .3px; }
+  .hero p { margin: 0; font-size: 15px; line-height: 23px; color: var(--ink-500); }
+
+  /* 当前状态条：证明换伙伴不清空进度 */
+  .keep {
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 20px;
+    background: var(--surface-warm); border: 1px solid var(--line); border-radius: var(--r-md);
+    font-size: 13px; line-height: 19px; color: var(--ink-700);
+  }
+  .keep svg { flex: none; width: 18px; height: 18px; color: var(--green-500); }
+  .keep b { font-weight: 700; }
+
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 24px; }
+
+  .pet {
+    position: relative; display: flex; flex-direction: column; align-items: center;
+    padding: 14px 10px 14px; background: var(--surface); border: 2px solid var(--line);
+    border-radius: var(--r-lg); box-shadow: var(--shadow-1); cursor: pointer;
+    transition: border-color .18s, background .18s, transform .18s;
+    text-align: center;
+  }
+  .pet:active { transform: scale(.975); }
+  .pet img { width: 116px; height: 112px; display: block; margin-bottom: 4px; }
+  .pet__name { font-size: 17px; font-weight: 700; line-height: 24px; }
+  .pet__desc { margin-top: 2px; font-size: 12px; line-height: 17px; color: var(--ink-500); }
+
+  .pet.is-active { border-color: var(--orange-500); background: var(--orange-50); }
+  .pet.is-active .pet__name { color: var(--orange-700); }
+
+  .pet__tick {
+    position: absolute; top: 10px; left: 10px; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--orange-500); display: none; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(242,112,27,.35);
+  }
+  .pet.is-active .pet__tick { display: flex; }
+  .pet__tick svg { width: 14px; height: 14px; color: #fff; }
+
+  .pet__now {
+    position: absolute; top: 10px; right: 10px; font-size: 11px; font-weight: 600;
+    color: var(--ink-500); background: var(--surface-sunk); border-radius: var(--r-pill);
+    padding: 3px 8px;
+  }
+  .pet.is-active .pet__now { color: var(--orange-700); background: #fff; }
+
+  /* 底部固定区 */
+  .dock {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+    max-width: 430px; margin: 0 auto; padding: 14px 20px calc(18px + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--bg-warm) 62%, rgba(255,248,240,0));
+  }
+  .dock__note { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 12px; font-size: 12px; line-height: 18px; color: var(--ink-500); }
+  .dock__note svg { flex: none; width: 15px; height: 15px; margin-top: 1px; color: var(--ink-300); }
+  .btn {
+    width: 100%; height: 54px; border: 0; border-radius: var(--r-pill); cursor: pointer;
+    background: var(--orange-500); color: #fff; font-family: inherit; font-size: 18px; font-weight: 700;
+    box-shadow: 0 8px 18px -8px rgba(242,112,27,.6);
+  }
+  .btn:active { background: var(--orange-600); }
+  .btn[disabled] { background: #ddd2c4; box-shadow: none; color: #fff; }
+
+  /* 设计稿批注（不属于界面） */
+  .notes { margin: 26px 0 0; padding: 16px 18px; border-radius: var(--r-md); background: #fff; border: 1px dashed var(--line-strong); }
+  .notes h2 { margin: 0 0 8px; font-size: 13px; letter-spacing: .5px; color: var(--ink-500); font-weight: 700; }
+  .notes ul { margin: 0; padding-left: 18px; font-size: 12px; line-height: 19px; color: var(--ink-700); }
+  .notes li + li { margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <header class="topbar">
+    <span class="topbar__back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5.5-6.5 6.5 6.5 6.5"/></svg>
+      我的伙伴
+    </span>
+    <span class="topbar__title">朵朵</span>
+    <span class="topbar__ghost"></span>
+  </header>
+
+  <main class="body">
+    <div class="hero">
+      <h1>选一个你的伙伴</h1>
+      <p>五个都在等你。选谁都可以，之后随时能换。</p>
+    </div>
+
+    <div class="keep">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+      <span>换伙伴不会丢掉 <b>Lv.5</b> 等级、<b>120</b> 经验，和已经换到的 <b>3</b> 件装扮。</span>
+    </div>
+
+    <div class="grid" id="grid">
+      <button class="pet" type="button" data-pet="bear">
+        <span class="pet__tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+        <img src="../assets/pets/bear.svg" alt="小熊" />
+        <span class="pet__name">小熊</span>
+        <span class="pet__desc">憨憨的，抱起来暖暖的</span>
+      </button>
+
+      <button class="pet" type="button" data-pet="rabbit">
+        <span class="pet__tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+        <img src="../assets/pets/rabbit.svg" alt="小兔" />
+        <span class="pet__name">小兔</span>
+        <span class="pet__desc">耳朵长长，跑得飞快</span>
+      </button>
+
+      <button class="pet is-active" type="button" data-pet="cat">
+        <span class="pet__tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+        <span class="pet__now">现在这位</span>
+        <img src="../assets/pets/cat.svg" alt="小猫" />
+        <span class="pet__name">小猫</span>
+        <span class="pet__desc">爱晒太阳，也爱陪着你</span>
+      </button>
+
+      <button class="pet" type="button" data-pet="dog">
+        <span class="pet__tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+        <img src="../assets/pets/dog.svg" alt="小狗" />
+        <span class="pet__name">小狗</span>
+        <span class="pet__desc">你一回家它就摇尾巴</span>
+      </button>
+
+      <button class="pet" type="button" data-pet="fox">
+        <span class="pet__tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+        <img src="../assets/pets/fox.svg" alt="小狐狸" />
+        <span class="pet__name">小狐狸</span>
+        <span class="pet__desc">最机灵，总能想出好主意</span>
+      </button>
+
+      <div class="pet" style="visibility:hidden" aria-hidden="true"></div>
+    </div>
+
+    <section class="notes">
+      <h2>设计稿批注（不属于界面）</h2>
+      <ul>
+        <li>入口：P-C3 宠物区右上「换个伙伴」文字按钮；首次进入（尚未选过）整页即此流程，无返回。</li>
+        <li>默认选中 = 当前宠物；老用户升级后默认显示「小猫」，标注「现在这位」，不构成强制迁移。</li>
+        <li>点卡片即选中（不进入二级页）；底部按钮文案随状态变化：「就选它」/「还是这位」。</li>
+        <li>切换只改「宠物种类」一项，等级 / 经验 / 收藏 / 当前穿戴一个字段都不动（见 03 IR-50）。</li>
+        <li>五种宠物共用同一骨相与装扮锚点，因此帽子 / 眼镜 / 围巾 / 衣服 / 背景全部可直接复用（见 07 §3）。</li>
+      </ul>
+    </section>
+  </main>
+
+  <div class="dock">
+    <p class="dock__note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+      <span>等级和经验会跟着你走，装扮也还在衣柜里，一件都不会少。</span>
+    </p>
+    <button class="btn" type="button" id="confirm">还是这位</button>
+  </div>
+</div>
+
+<script>
+  const grid = document.getElementById('grid')
+  const confirmBtn = document.getElementById('confirm')
+  let picked = 'cat'
+
+  grid.addEventListener('click', (event) => {
+    const card = event.target.closest('[data-pet]')
+    if (!card) return
+    picked = card.dataset.pet
+    for (const node of grid.querySelectorAll('[data-pet]')) {
+      node.classList.toggle('is-active', node.dataset.pet === picked)
+    }
+    confirmBtn.textContent = picked === 'cat' ? '还是这位' : '就选它'
+  })
+</script>
+</body>
+</html>

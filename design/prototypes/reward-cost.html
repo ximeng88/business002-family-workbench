@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>设计稿 · 奖励积分自由输入（P-P4 奖励管理）</title>
+<style>
+  :root {
+    --bg-warm: #fff8f0; --bg-cool: #f1f6ff; --surface: #fff; --surface-warm: #fffaf3; --surface-sunk: #fbf5ec;
+    --orange-50: #fff2e6; --orange-100: #ffe0c4; --orange-400: #ffa057; --orange-500: #ff8a3d; --orange-600: #f2701b; --orange-700: #c9540c;
+    --parent-700: #2f5fd0; --parent-600: #3a6ee0; --parent-50: #eaf0ff; --parent-line: #dde6f7; --parent-900: #16233c;
+    --parent-danger: #d64545; --parent-danger-soft: #fdeaea;
+    --star-500: #ffc531; --star-700: #d99a00; --red: #d64545;
+    --ink-900: #2a241d; --ink-700: #554b3f; --ink-500: #857a6c; --ink-300: #b3a897;
+    --line: #f1e6d8; --line-strong: #e6d7c4;
+    --r-sm: 14px; --r-md: 20px; --r-lg: 26px; --r-pill: 999px;
+    --shadow-1: 0 2px 8px rgba(154,112,62,.06);
+    --shadow-parent: 0 1px 2px rgba(22,35,60,.06), 0 8px 20px -14px rgba(22,35,60,.28);
+    --font-round: "PingFang SC", "HarmonyOS Sans SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body { font-family: var(--font-round); background: #eef2f9; color: var(--ink-900); font-variant-numeric: tabular-nums; padding: 28px 0 56px; }
+  .board { width: 430px; margin: 0 auto; }
+  .board > h1 { font-size: 15px; letter-spacing: .4px; color: #5c6b86; margin: 0 0 14px; font-weight: 700; }
+  .screen {
+    width: 430px; min-height: 800px; background: #f6f8fc; border-radius: 28px; overflow: hidden;
+    box-shadow: 0 18px 40px -26px rgba(22,35,60,.55); margin-bottom: 34px; position: relative; display: flex; flex-direction: column;
+  }
+  .tag { position: absolute; top: 0; left: 0; z-index: 9; font-size: 11px; font-weight: 700; letter-spacing: .4px; padding: 5px 10px; border-bottom-right-radius: 10px; color: #fff; background: var(--parent-700); }
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 34px 16px 8px; }
+  .topbar__title { font-size: 16px; font-weight: 600; color: #40506b; }
+  .ghost { width: 40px; }
+  .content { padding: 8px 16px 26px; }
+
+  .hero { padding: 6px 2px 16px; }
+  .hero h2 { margin: 0 0 6px; font-size: 21px; line-height: 29px; font-weight: 700; color: var(--parent-900); }
+  .hero p { margin: 0; font-size: 13px; line-height: 20px; color: #71809a; }
+
+  .card { background: #fff; border: 1px solid var(--parent-line); border-radius: 14px; padding: 15px; box-shadow: var(--shadow-parent); }
+  .card + .card { margin-top: 12px; }
+
+  .row { display: flex; gap: 12px; align-items: center; }
+  .row__art { width: 46px; height: 46px; border-radius: 13px; background: var(--parent-50); display: flex; align-items: center; justify-content: center; flex: none; }
+  .row__art svg { width: 24px; height: 24px; color: var(--parent-700); }
+  .row__body { flex: 1; min-width: 0; }
+  .row__body h3 { margin: 0 0 3px; font-size: 15px; font-weight: 700; color: var(--parent-900); }
+  .row__body p { margin: 0; font-size: 12px; color: #71809a; }
+  .row__price { text-align: right; flex: none; }
+  .row__price b { display: block; font-size: 19px; font-weight: 700; color: var(--parent-900); }
+  .row__price span { font-size: 11px; color: #71809a; }
+
+  .mini {
+    height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--parent-line); background: #f7f9ff;
+    color: var(--parent-700); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .mini--off { color: #8a4a4a; background: #fdf1f1; border-color: #f6dada; }
+
+  /* 改价面板 */
+  .sheet { background: #fff; border-radius: 20px; padding: 18px; box-shadow: 0 10px 26px -18px rgba(22,35,60,.45); border: 1px solid var(--parent-line); }
+  .sheet__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .sheet__head h2 { margin: 0; font-size: 18px; font-weight: 700; color: var(--parent-900); }
+  .sheet__head span { font-size: 12px; color: #71809a; }
+
+  .cost-row { display: flex; align-items: center; gap: 10px; }
+  .stepper-btn {
+    width: 48px; height: 56px; border-radius: 12px; border: 1px solid var(--parent-line); background: #f7f9ff;
+    color: var(--parent-700); font-size: 22px; font-weight: 700; cursor: pointer; flex: none; font-family: inherit;
+  }
+  .cost-field { position: relative; flex: 1; }
+  .cost-input {
+    width: 100%; height: 64px; border-radius: 12px; border: 2px solid var(--parent-600); background: #fff;
+    padding: 0 46px 0 14px; font-family: var(--font-round); font-size: 30px; font-weight: 800; color: var(--parent-900);
+    text-align: center; outline: none; font-variant-numeric: tabular-nums; letter-spacing: 1px;
+  }
+  .cost-input::placeholder { color: #c3cddd; font-weight: 600; }
+  .cost-unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 15px; font-weight: 600; color: #71809a; }
+  .cost-input--bad { border-color: var(--red); background: #fff7f7; }
+
+  .quick { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .chip {
+    height: 34px; padding: 0 13px; border-radius: var(--r-pill); border: 1px solid var(--parent-line);
+    background: #fff; color: #40506b; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .chip.is-on { background: var(--parent-50); border-color: #b9cdf5; color: var(--parent-700); }
+
+  .hint { display: flex; gap: 7px; align-items: flex-start; margin: 12px 0 0; font-size: 12px; line-height: 18px; color: #71809a; }
+  .hint svg { width: 14px; height: 14px; margin-top: 2px; flex: none; }
+  .err { display: none; gap: 7px; align-items: flex-start; margin: 12px 0 0; font-size: 12px; line-height: 18px; color: var(--red); }
+  .err svg { width: 14px; height: 14px; margin-top: 2px; flex: none; }
+
+  .actions { display: flex; gap: 10px; margin-top: 16px; }
+  .btn { flex: 1; height: 48px; border-radius: 12px; border: 0; cursor: pointer; font-family: inherit; font-size: 15px; font-weight: 700; color: #fff; background: var(--parent-700); }
+  .btn--ghost { background: #fff; color: #40506b; border: 1px solid var(--parent-line); }
+  .btn[disabled] { background: #c9d4e8; }
+
+  /* 孩子端同步对照 */
+  .kid { background: var(--bg-warm); border-radius: 14px; border: 1px solid var(--line); padding: 14px; }
+  .kid__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .kid__head b { font-size: 14px; }
+  .kid__head span { font-size: 12px; color: var(--ink-500); }
+  .shop-row { display: flex; align-items: center; gap: 11px; padding: 10px; background: #fff; border-radius: 16px; box-shadow: var(--shadow-1); }
+  .shop-row + .shop-row { margin-top: 9px; }
+  .shop-row__art { width: 42px; height: 42px; border-radius: 12px; background: var(--orange-50); display: flex; align-items: center; justify-content: center; flex: none; }
+  .shop-row__art svg { width: 22px; height: 22px; color: var(--orange-600); }
+  .shop-row__body { flex: 1; }
+  .shop-row__body b { display: block; font-size: 14px; font-weight: 700; }
+  .shop-row__body span { font-size: 12px; color: var(--ink-500); }
+  .cost-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 800; color: var(--star-700); }
+  .cost-tag svg { width: 13px; height: 13px; color: var(--star-500); }
+  .shop-btn {
+    height: 38px; padding: 0 14px; border-radius: var(--r-pill); border: 2px solid var(--orange-500);
+    background: #fff; color: var(--orange-700); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; flex: none;
+  }
+  .shop-btn--short { border-color: var(--line-strong); color: var(--ink-500); background: var(--surface-sunk); }
+
+  .states { display: grid; gap: 9px; margin-top: 12px; }
+  .state { display: flex; gap: 9px; padding: 11px 13px; border-radius: 12px; background: #fff; border: 1px solid var(--parent-line); }
+  .state__dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; flex: none; }
+  .state b { display: block; font-size: 12px; font-weight: 700; margin-bottom: 1px; color: var(--parent-900); }
+  .state span { font-size: 11px; line-height: 17px; color: #71809a; }
+
+  .brief { width: 430px; margin: 0 auto; padding: 16px 18px; border-radius: 16px; background: #fff; }
+  .brief h2 { margin: 0 0 8px; font-size: 13px; color: #5c6b86; letter-spacing: .4px; }
+  .brief ul { margin: 0; padding-left: 18px; font-size: 12px; line-height: 19px; color: #3c4a63; }
+</style>
+</head>
+<body>
+<div class="board">
+  <h1>设计稿 ② 家长端 · 奖励积分自由输入（P-P4 奖励管理）</h1>
+
+  <!-- 屏 1：列表 + 改价面板 -->
+  <section class="screen">
+    <span class="tag">家长端 · 积分与奖励 → 奖励管理</span>
+    <header class="topbar"><span class="ghost"></span><span class="topbar__title">奖励管理</span><span class="ghost"></span></header>
+
+    <div class="content">
+      <div class="hero">
+        <h2>奖励由你定价</h2>
+        <p>想给多少给多少，7 颗、13 颗、26 颗都行。改完立刻生效，孩子端看到的就是新价格。</p>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <span class="row__art">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.2V12l3.2 2"/></svg>
+          </span>
+          <div class="row__body">
+            <h3>额外玩 10 分钟</h3>
+            <p>现在 7 颗 · 建议 20 颗</p>
+          </div>
+          <div class="row__price"><b>7</b><span>颗星星</span></div>
+        </div>
+        <div class="actions" style="margin-top:12px">
+          <button class="mini" type="button">改积分</button>
+          <button class="mini mini--off" type="button">停用</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <span class="row__art">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.4A8.4 8.4 0 0 1 9.6 4a8.6 8.6 0 1 0 10.4 10.4Z"/></svg>
+          </span>
+          <div class="row__body">
+            <h3>看一集动画片</h3>
+            <p>现在 13 颗 · 建议 30 颗</p>
+          </div>
+          <div class="row__price"><b>13</b><span>颗星星</span></div>
+        </div>
+        <div class="actions" style="margin-top:12px">
+          <button class="mini" type="button">改积分</button>
+          <button class="mini mini--off" type="button">停用</button>
+        </div>
+      </div>
+
+      <!-- 展开的改价面板 -->
+      <div class="sheet" style="margin-top:12px">
+        <div class="sheet__head">
+          <h2>改「额外玩 10 分钟」的积分</h2>
+          <span>现在 7 颗</span>
+        </div>
+
+        <div class="cost-row">
+          <button class="stepper-btn" type="button" aria-label="减少 1">−</button>
+          <div class="cost-field">
+            <input class="cost-input" value="13" inputmode="numeric" maxlength="5" aria-label="奖励积分" />
+            <span class="cost-unit">颗</span>
+          </div>
+          <button class="stepper-btn" type="button" aria-label="增加 1">+</button>
+        </div>
+
+        <div class="quick">
+          <button class="chip" type="button">5</button>
+          <button class="chip is-on" type="button">13</button>
+          <button class="chip" type="button">20</button>
+          <button class="chip" type="button">30</button>
+          <button class="chip" type="button">50</button>
+          <button class="chip" type="button">100</button>
+        </div>
+
+        <p class="hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 11v5.4"/><circle cx="12" cy="7.9" r=".95" fill="currentColor" stroke="none"/></svg>
+          <span>1–10000 之间的整数。上面的数字只是常用值，点了会填进去，也可以自己敲。</span>
+        </p>
+
+        <div class="actions">
+          <button class="btn btn--ghost" type="button">取消</button>
+          <button class="btn" type="button">保存</button>
+        </div>
+      </div>
+
+      <p class="hint" style="margin-top:14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9.8h8.6a5.3 5.3 0 1 1 0 10.6H8.4"/><path d="M7.6 5.8 3.8 9.8l3.8 4"/></svg>
+        <span>已经提交的兑换申请按当时的价格算，不会被新价格改掉。</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- 屏 2：校验态 -->
+  <section class="screen" style="background:#f6f8fc">
+    <span class="tag">家长端 · 输入不合法的六种情况</span>
+    <header class="topbar"><span class="ghost"></span><span class="topbar__title">改价 · 异常态</span><span class="ghost"></span></header>
+
+    <div class="content">
+      <div class="card">
+        <div class="sheet__head" style="margin-bottom:10px"><h2 style="font-size:16px">空着没填</h2><span>保存按钮灰掉</span></div>
+        <div class="cost-row">
+          <button class="stepper-btn" type="button">−</button>
+          <div class="cost-field">
+            <input class="cost-input cost-input--bad" value="" placeholder="填个数字" aria-label="空值" />
+            <span class="cost-unit">颗</span>
+          </div>
+          <button class="stepper-btn" type="button">+</button>
+        </div>
+        <p class="err" style="display:flex">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.8v5"/><circle cx="12" cy="16.2" r=".9" fill="currentColor" stroke="none"/></svg>
+          <span>还没填数字，填一个 1 到 10000 之间的整数</span>
+        </p>
+        <div class="actions"><button class="btn btn--ghost" type="button">取消</button><button class="btn" type="button" disabled>保存</button></div>
+      </div>
+
+      <div class="card">
+        <div class="sheet__head" style="margin-bottom:10px"><h2 style="font-size:16px">填了 0</h2><span>保存按钮灰掉</span></div>
+        <div class="cost-row">
+          <button class="stepper-btn" type="button">−</button>
+          <div class="cost-field"><input class="cost-input" value="0" aria-label="零" /><span class="cost-unit">颗</span></div>
+          <button class="stepper-btn" type="button">+</button>
+        </div>
+        <p class="err" style="display:flex">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.8v5"/><circle cx="12" cy="16.2" r=".9" fill="currentColor" stroke="none"/></svg>
+          <span>至少要 1 颗，0 颗就相当于白送了</span>
+        </p>
+        <div class="actions"><button class="btn btn--ghost" type="button">取消</button><button class="btn" type="button" disabled>保存</button></div>
+      </div>
+
+      <div class="states">
+        <div class="state"><span class="state__dot" style="background:#d64545"></span><div><b>小数 / 小数点</b><span>「只能填整数，13.5 这种先四舍五入成 14 再填」——不替用户偷偷取整。</span></div></div>
+        <div class="state"><span class="state__dot" style="background:#d64545"></span><div><b>输入非数字</b><span>「这里只能填数字」——输入框只收 0–9，粘贴进来的字母直接过滤并提示。</span></div></div>
+        <div class="state"><span class="state__dot" style="background:#d64545"></span><div><b>超过 10000</b><span>「最多 10000 颗，检查一下是不是多打了几个 0」——保留原输入，不自动截断。</span></div></div>
+        <div class="state"><span class="state__dot" style="background:#b4711a"></span><div><b>负数</b><span>不提供负号键；粘贴负数提示「积分不能是负数」。</span></div></div>
+        <div class="state"><span class="state__dot" style="background:#1fc08a"></span><div><b>保存失败</b><span>「这次没保存成功，再点一次」——面板不关闭，已填数字保留。</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 屏 3：孩子端同步 -->
+  <section class="screen" style="background:#fff8f0">
+    <span class="tag" style="background:var(--orange-500)">孩子端 · P-C3 价格同步（只读）</span>
+    <header class="topbar"><span class="topbar__title" style="color:#857a6c">用星星换点什么</span><span class="ghost"></span></header>
+
+    <div class="content">
+      <div class="kid">
+        <div class="kid__head"><b>生活奖励</b><span>朵朵现在有 40 颗</span></div>
+
+        <div class="shop-row">
+          <span class="shop-row__art"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.2V12l3.2 2"/></svg></span>
+          <span class="shop-row__body"><b>额外玩 10 分钟</b><span>自己安排这 10 分钟</span></span>
+          <span class="cost-tag"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.4l2.6 5.4 5.8.8-4.2 4.2 1 5.9L12 16.9 6.8 19.7l1-5.9L3.6 9.6l5.8-.8Z"/></svg>13</span>
+          <button class="shop-btn" type="button">选这个</button>
+        </div>
+
+        <div class="shop-row">
+          <span class="shop-row__art"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.4A8.4 8.4 0 0 1 9.6 4a8.6 8.6 0 1 0 10.4 10.4Z"/></svg></span>
+          <span class="shop-row__body"><b>看一集动画片</b><span>挑一集最想看的</span></span>
+          <span class="cost-tag"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.4l2.6 5.4 5.8.8-4.2 4.2 1 5.9L12 16.9 6.8 19.7l1-5.9L3.6 9.6l5.8-.8Z"/></svg>26</span>
+          <button class="shop-btn" type="button">选这个</button>
+        </div>
+
+        <div class="shop-row">
+          <span class="shop-row__art"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.1"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2"/></svg></span>
+          <span class="shop-row__body"><b>周末去公园</b><span>带上滑板车出门</span></span>
+          <span class="cost-tag"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.4l2.6 5.4 5.8.8-4.2 4.2 1 5.9L12 16.9 6.8 19.7l1-5.9L3.6 9.6l5.8-.8Z"/></svg>38</span>
+          <button class="shop-btn shop-btn--short" type="button">还差 2 颗</button>
+        </div>
+      </div>
+
+      <p class="hint" style="margin-top:14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 11v5.4"/><circle cx="12" cy="7.9" r=".95" fill="currentColor" stroke="none"/></svg>
+        <span>孩子端只显示价格，没有任何改价入口。</span>
+      </p>
+    </div>
+  </section>
+
+  <div class="brief">
+    <h2>为什么不是「只能 5 / 10 一档」</h2>
+    <ul>
+      <li>固定档位强迫家长把「值多少」改成「最接近的档」，于是所有奖励挤在 10/20/30，失去区分度。</li>
+      <li>自由输入后，默认价只作「建议」，改过的价格不会被刷新或重进重置（IR-11A 不变）。</li>
+      <li>10000 只是防误按的上限，不是产品价格带；日使用场景通常在 1–200。</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

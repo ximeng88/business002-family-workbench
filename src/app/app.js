@@ -10,7 +10,11 @@
  */
 
 import { DB_ERROR_CODES } from "../db/errors.js"
-import { avatarOf, icon, subjectOf } from "./icons.js"
+import { REWARD_COST_MAX } from "../services/reward.service.js"
+import { avatarMarkup, clampOffset, drawAvatarCover, exportAvatarDataUrl, loadAvatarFile, AVATAR_MAX_SCALE } from "./avatar.js"
+import { costFieldMarkup, initCostFields, readCost } from "./costField.js"
+import { AVATARS, icon, subjectOf } from "./icons.js"
+import { PET_KEYS, petMeta, petSvg } from "./pet.js"
 import { installState, onInstallChange, promptInstall, watchInstallPrompt } from "./install.js"
 import { renderAssign } from "./pages/assign.js"
 import { renderChildren } from "./pages/children.js"
@@ -48,6 +52,7 @@ import {
   doUndoRestore,
   doUnequipCostume,
   doUnlockParent,
+  doUpdateChildProfile,
   doUpdateReward,
   doVerifyRecoveryCode,
   doWipeAllData,
@@ -141,14 +146,11 @@ function badgeFor(tabId) {
 /* ---------------- 头部 ---------------- */
 
 function kidHeader() {
-  const avatar = avatarOf(state.child?.avatarKey)
   const nickname = state.child?.nickname ?? "小朋友"
   return `
     <header class="topbar">
       <button class="who who--button" type="button" data-open-children aria-label="切换孩子或管理孩子">
-        <span class="who__avatar" aria-hidden="true">
-          <span class="who__emoji">${avatar.emoji}</span>
-        </span>
+        <span class="who__avatar">${avatarMarkup(state.child, { size: "sm" })}</span>
         <span class="who__text">
           <span class="who__greet">${greeting()}，点这里换孩子</span>
           <span class="who__name">${escapeHtml(nickname)}${icon("chevron", { size: 13, className: "who__switch" })}</span>
@@ -162,14 +164,13 @@ function kidHeader() {
 }
 
 function parentHeader() {
-  const avatar = avatarOf(state.child?.avatarKey)
   const pending = pendingCount()
   return `
     <header class="topbar topbar--parent">
       <div class="who">
-        <span class="who__avatar who__avatar--parent" aria-hidden="true">${icon("shield", { size: 20 })}</span>
+        <span class="who__avatar who__avatar--parent">${icon("shield", { size: 20 })}</span>
         <div class="who__text">
-          <p class="who__greet">家长模式 · ${avatar.emoji} ${escapeHtml(state.child?.nickname ?? "孩子")}${
+          <p class="who__greet">家长模式 · ${escapeHtml(state.child?.nickname ?? "孩子")}${
             pending > 0 ? ` · ${pending} 条待确认` : ""
           }</p>
           <h1 class="who__name">${PAGES[state.page]?.title ?? "家长端"}</h1>
@@ -226,6 +227,8 @@ function render({ keepScroll = false } = {}) {
 
   renderTabbar(mode)
   syncShopDock()
+  // 页面里的积分输入（新建奖励表单）需要挂交互；弹层里的由 onMount 自己挂
+  initCostFields(main)
   paintBalance()
   if (!keepScroll) window.scrollTo({ top: 0, behavior: "auto" })
 }
@@ -587,13 +590,12 @@ async function openChildSwitcher() {
 
   const rows = state.children
     .map((child) => {
-      const avatar = avatarOf(child.avatarKey)
       const stat = state.childStats.find((row) => row.id === child.id)
       const active = child.id === state.childId
       const pending = stat?.pending ?? 0
       return `
         <button class="switch-item ${active ? "is-active" : ""}" type="button" data-switch-child="${escapeHtml(child.id)}">
-          <span class="switch-item__avatar">${avatar.emoji}</span>
+          <span class="switch-item__avatar">${avatarMarkup(child, { size: "sm" })}</span>
           <span class="switch-item__body">
             <strong>${escapeHtml(child.nickname)}</strong>
             <small>今天 ${stat?.approved ?? 0}/${stat?.todayTotal ?? 0} 完成${
@@ -874,6 +876,473 @@ async function handleAddChild(form) {
   toast(`添加了 ${child.nickname}，已经切换到他`, "ok")
 }
 
+/* ---------------- 面板：孩子资料（昵称 / 头像 / 宠物） ---------------- */
+
+/**
+ * 正在编辑的资料草稿。
+ *
+ * 为什么需要它：头像要走「来源层 → 系统选图 → 裁剪层」三步，每一步都会用
+ * `openSheet` 把上一个弹层顶掉（同层覆盖）。如果草稿存在弹层的闭包里，
+ * 裁剪完回来就只剩旧昵称了。所以草稿放在模块级，弹层只负责渲染。
+ */
+let profileDraft = null
+
+function childForProfile(childId) {
+  return state.children.find((row) => row.id === childId) ?? (state.child?.id === childId ? state.child : null)
+}
+
+function draftFromChild(child) {
+  return {
+    childId: child.id,
+    nickname: child.nickname ?? "",
+    avatarKey: child.avatarKey ?? "cat",
+    avatarImage: typeof child.avatarImage === "string" && child.avatarImage ? child.avatarImage : null,
+  }
+}
+
+/**
+ * 编辑孩子资料（家长改任意孩子；孩子改自己，都不要求 PIN）。
+ * @param {string} childId
+ * @param {{ keepDraft?: boolean }} [options] 从裁剪层返回时传 true，保留已选的照片
+ */
+function openChildProfileSheet(childId, { keepDraft = false } = {}) {
+  const child = childForProfile(childId)
+  if (!child) return
+
+  if (!keepDraft || !profileDraft || profileDraft.childId !== childId) {
+    profileDraft = draftFromChild(child)
+  }
+  const draft = profileDraft
+
+  openSheet(
+    `
+    <div class="sheet__head">
+      <span class="task__icon task__icon--lg tone-orange">${icon("users", { size: 26 })}</span>
+      <div class="sheet__heading">
+        <h2 id="profile-title">改「${escapeHtml(child.nickname)}」的资料</h2>
+        <p>改名字和头像不用输 PIN：这里动的是长相，不是星星和审核</p>
+      </div>
+      <button class="sheet__close" type="button" data-sheet-close aria-label="关闭">${icon("close", { size: 20 })}</button>
+    </div>
+
+    <div class="profile-head">
+      <button class="profile-head__avatar" type="button" data-pick-avatar
+        aria-label="换一个头像">${avatarMarkup(draft, { size: "xl" })}
+        <span class="profile-head__cam" aria-hidden="true">${icon("camera", { size: 15 })}</span>
+      </button>
+      <p class="profile-head__hint">点照片可以换一个</p>
+    </div>
+
+    <form class="sheet__form" data-profile-form novalidate>
+      <label class="sheet__label" for="profile-nickname">叫什么</label>
+      <div class="field field--single">
+        <input class="input" id="profile-nickname" name="nickname"
+          value="${escapeHtml(draft.nickname)}" autocomplete="off" enterkeyhint="done" data-profile-nickname />
+        <span class="field__count"><b data-name-count>${draft.nickname.length}</b>/12</span>
+      </div>
+      <p class="field__err" data-name-error hidden></p>
+
+      <button class="btn btn--primary btn--xl" type="submit" data-profile-save>保存</button>
+    </form>`,
+    {
+      labelledBy: "profile-title",
+      onMount(panel) {
+        const input = panel.querySelector("[data-profile-nickname]")
+        const counter = panel.querySelector("[data-name-count]")
+        const errorNode = panel.querySelector("[data-name-error]")
+        const saveButton = panel.querySelector("[data-profile-save]")
+
+        const validate = () => {
+          const value = input.value.trim()
+          const message =
+            value === ""
+              ? "名字不能为空，写一个就行"
+              : value.length > 12
+                ? "名字最多 12 个字"
+                : ""
+          errorNode.hidden = message === ""
+          errorNode.textContent = message
+          input.classList.toggle("is-invalid", message !== "")
+          input.setAttribute("aria-invalid", String(message !== ""))
+          saveButton.disabled = message !== ""
+          return message === ""
+        }
+
+        input.addEventListener("input", () => {
+          counter.textContent = String(input.value.length)
+          validate()
+        })
+        validate()
+
+        panel.querySelector("[data-pick-avatar]")?.addEventListener("click", () => {
+          openAvatarSourceSheet(childId)
+        })
+      },
+    },
+  )
+}
+
+/** 头像来源：自己的照片 / 换回默认 / 挑预设 */
+function openAvatarSourceSheet(childId) {
+  const draft = profileDraft
+  if (!draft) return
+
+  openSheet(
+    `
+    <div class="sheet__head">
+      <span class="task__icon task__icon--lg tone-blue">${icon("camera", { size: 26 })}</span>
+      <div class="sheet__heading">
+        <h2 id="avatar-source-title">用哪个头像？</h2>
+        <p>可以挑一个现成的，也可以用自己的照片。照片只存在这台设备上。</p>
+      </div>
+      <button class="sheet__close" type="button" data-sheet-close aria-label="关闭">${icon("close", { size: 20 })}</button>
+    </div>
+
+    <div class="source-list">
+      <button class="source" type="button" data-avatar-upload>
+        <span class="source__ico source__ico--o">${icon("camera", { size: 20 })}</span>
+        <span class="source__body"><b>用我的照片</b><span>从相册选，或现在拍一张</span></span>
+        ${icon("chevron", { size: 16 })}
+      </button>
+      <button class="source" type="button" data-avatar-reset>
+        <span class="source__ico source__ico--g">${icon("refresh", { size: 20 })}</span>
+        <span class="source__body"><b>换回默认头像</b><span>删掉自己的照片，用回小动物</span></span>
+        ${icon("chevron", { size: 16 })}
+      </button>
+    </div>
+
+    <span class="sheet__label">或者挑一个现成的</span>
+    <div class="preset-grid" role="radiogroup" aria-label="预设头像">
+      ${AVATARS.map(
+        (avatar) => `
+        <button class="preset ${!draft.avatarImage && draft.avatarKey === avatar.key ? "is-on" : ""}" type="button"
+          role="radio" aria-checked="${!draft.avatarImage && draft.avatarKey === avatar.key}"
+          aria-label="${avatar.label}" data-preset-avatar="${avatar.key}">${avatar.emoji}</button>`,
+      ).join("")}
+    </div>
+
+    <input type="file" accept="image/jpeg,image/png,image/webp" data-avatar-file hidden />`,
+    {
+      labelledBy: "avatar-source-title",
+      onMount(panel) {
+        const fileInput = panel.querySelector("[data-avatar-file]")
+
+        panel.querySelector("[data-avatar-upload]")?.addEventListener("click", () => {
+          fileInput?.click()
+        })
+
+        panel.querySelector("[data-avatar-reset]")?.addEventListener("click", () => {
+          profileDraft.avatarImage = null
+          openChildProfileSheet(childId, { keepDraft: true })
+          toast("已经换回小动物头像", "info")
+        })
+
+        for (const preset of panel.querySelectorAll("[data-preset-avatar]")) {
+          preset.addEventListener("click", () => {
+            profileDraft.avatarKey = preset.dataset.presetAvatar
+            // 点预设 = 换回默认：已有照片会被丢掉，这是唯一会丢图的操作
+            profileDraft.avatarImage = null
+            openChildProfileSheet(childId, { keepDraft: true })
+          })
+        }
+
+        fileInput?.addEventListener("change", () => {
+          const file = fileInput.files?.[0]
+          if (!file) return
+          fileInput.value = ""
+          void openAvatarCropSheet(childId, file)
+        })
+      },
+    },
+  )
+}
+
+/**
+ * 选图 → 校验 → 解码 → 裁剪。
+ * 校验失败一律"原头像不变"，并在来源层上说清原因，不静默。
+ */
+async function openAvatarCropSheet(childId, file) {
+  let loaded
+  try {
+    loaded = await loadAvatarFile(file)
+  } catch (error) {
+    toast(error?.message ?? "这张图用不了，换一张试试", "warn")
+    openAvatarSourceSheet(childId)
+    return
+  }
+
+  const { image, dispose } = loaded
+  const draft = profileDraft
+  if (!draft) {
+    dispose()
+    return
+  }
+
+  let scale = 1
+  let offsetX = 0
+  let offsetY = 0
+
+  openSheet(
+    `
+    <div class="sheet__head">
+      <span class="task__icon task__icon--lg tone-green">${icon("camera", { size: 26 })}</span>
+      <div class="sheet__heading">
+        <h2 id="crop-title">调整照片</h2>
+        <p>拖动照片挪位置，滑杆可以放大。存下来是 256×256。</p>
+      </div>
+      <button class="sheet__close" type="button" data-sheet-close aria-label="关闭">${icon("close", { size: 20 })}</button>
+    </div>
+
+    <div class="crop-stage">
+      <canvas class="crop-canvas" width="256" height="256" data-crop-canvas
+        aria-label="头像裁剪预览"></canvas>
+      <span class="crop-ring" aria-hidden="true"></span>
+    </div>
+
+    <div class="crop-zoom">
+      ${icon("zoom", { size: 16 })}
+      <input class="crop-zoom__range" type="range" min="1" max="${AVATAR_MAX_SCALE}" step="0.01" value="1"
+        aria-label="放大照片" data-crop-zoom />
+      <span class="crop-zoom__value" data-crop-zoom-value>1.0×</span>
+    </div>
+
+    <div class="sheet__actions sheet__actions--split">
+      <button class="btn btn--ghost" type="button" data-crop-retry>重选一张</button>
+      <button class="btn btn--primary" type="button" data-crop-confirm>就用这张</button>
+    </div>`,
+    {
+      labelledBy: "crop-title",
+      onMount(panel) {
+        const canvas = panel.querySelector("[data-crop-canvas]")
+        const ctx = canvas?.getContext("2d")
+        const zoom = panel.querySelector("[data-crop-zoom]")
+        const zoomValue = panel.querySelector("[data-crop-zoom-value]")
+
+        const paint = () => {
+          if (!ctx) return
+          const metrics = drawAvatarCover(ctx, image, {
+            size: canvas.width,
+            scale,
+            offsetX,
+            offsetY,
+          })
+          const nextX = clampOffset(offsetX, metrics.maxOffsetX)
+          const nextY = clampOffset(offsetY, metrics.maxOffsetY)
+          if (nextX !== offsetX || nextY !== offsetY) {
+            offsetX = nextX
+            offsetY = nextY
+            paint()
+          }
+        }
+
+        paint()
+
+        let dragging = null
+        canvas?.addEventListener("pointerdown", (event) => {
+          dragging = { x: event.clientX, y: event.clientY, offsetX, offsetY }
+          canvas.setPointerCapture(event.pointerId)
+        })
+        canvas?.addEventListener("pointermove", (event) => {
+          if (!dragging) return
+          const rect = canvas.getBoundingClientRect()
+          const ratio = canvas.width / Math.max(1, rect.width)
+          offsetX = dragging.offsetX + (event.clientX - dragging.x) * ratio
+          offsetY = dragging.offsetY + (event.clientY - dragging.y) * ratio
+          paint()
+        })
+        const endDrag = () => {
+          dragging = null
+        }
+        canvas?.addEventListener("pointerup", endDrag)
+        canvas?.addEventListener("pointercancel", endDrag)
+
+        zoom?.addEventListener("input", () => {
+          scale = Number(zoom.value) || 1
+          if (zoomValue) zoomValue.textContent = `${scale.toFixed(1)}×`
+          paint()
+        })
+
+        panel.querySelector("[data-crop-retry]")?.addEventListener("click", () => {
+          dispose()
+          openAvatarSourceSheet(childId)
+        })
+
+        panel.querySelector("[data-crop-confirm]")?.addEventListener("click", () => {
+          let dataUrl
+          try {
+            dataUrl = exportAvatarDataUrl(image, { scale, offsetX, offsetY })
+          } catch (error) {
+            toast(error?.message ?? "这张图存不下来，换一张试试", "warn")
+            return
+          }
+          dispose()
+          if (profileDraft) profileDraft.avatarImage = dataUrl
+          openChildProfileSheet(childId, { keepDraft: true })
+        })
+      },
+    },
+  )
+}
+
+/** 保存孩子资料：只提交真正变了的字段 */
+async function handleProfileSave(form) {
+  if (state.busy || !profileDraft) return
+  const draft = profileDraft
+  const child = childForProfile(draft.childId)
+  if (!child) return
+
+  const input = form.querySelector("[data-profile-nickname]")
+  const nickname = String(input?.value ?? "").trim()
+  const button = form.querySelector("[data-profile-save]")
+  const idleHtml = button ? button.innerHTML : ""
+
+  if (nickname === "") {
+    input?.focus()
+    toast("名字不能为空，写一个就行", "warn")
+    return
+  }
+  if (nickname.length > 12) {
+    input?.focus()
+    toast("名字最多 12 个字", "warn")
+    return
+  }
+
+  const payload = { childId: draft.childId }
+  if (nickname !== (child.nickname ?? "")) payload.nickname = nickname
+  if (draft.avatarKey !== (child.avatarKey ?? "cat")) payload.avatarKey = draft.avatarKey
+  const currentImage = typeof child.avatarImage === "string" && child.avatarImage ? child.avatarImage : null
+  if ((draft.avatarImage ?? null) !== currentImage) payload.avatarImage = draft.avatarImage ?? null
+
+  if (Object.keys(payload).length === 1) {
+    closeSheet()
+    profileDraft = null
+    toast("资料没有变化", "info")
+    return
+  }
+
+  state.busy = { action: "update-profile", childId: draft.childId }
+  if (button) {
+    button.disabled = true
+    button.innerHTML = "正在保存…"
+  }
+
+  try {
+    await doUpdateChildProfile(payload)
+  } catch (error) {
+    state.busy = null
+    if (button) {
+      button.disabled = false
+      button.innerHTML = idleHtml
+    }
+    toast(error?.message || "这次没保存成功，再点一次", "warn")
+    return
+  }
+
+  state.busy = null
+  profileDraft = null
+  closeSheet()
+  render({ keepScroll: true })
+  toast(
+    payload.nickname
+      ? `名字改成「${nickname}」了`
+      : payload.avatarImage === null
+        ? "已经换回小动物头像"
+        : "头像换好啦",
+    "ok",
+  )
+}
+
+/* ---------------- 面板：换个伙伴（五种宠物） ---------------- */
+
+function openPetPickerSheet() {
+  const childId = state.childId
+  if (!childId) return
+  const current = state.child?.petKey && PET_KEYS.includes(state.child.petKey) ? state.child.petKey : "cat"
+  let picked = current
+
+  openSheet(
+    `
+    <div class="sheet__head">
+      <span class="task__icon task__icon--lg tone-purple">${icon("paw", { size: 26 })}</span>
+      <div class="sheet__heading">
+        <h2 id="pet-picker-title">换个伙伴</h2>
+        <p>等级和经验会跟着你走，装扮也还在衣柜里，一件都不会少</p>
+      </div>
+      <button class="sheet__close" type="button" data-sheet-close aria-label="关闭">${icon("close", { size: 20 })}</button>
+    </div>
+
+    <div class="pet-picker-grid" role="radiogroup" aria-label="选择伙伴">
+      ${PET_KEYS.map((key) => {
+        const meta = petMeta(key)
+        return `
+        <button class="pet-option ${key === current ? "is-active" : ""}" type="button" role="radio"
+          aria-checked="${key === current}" data-pet-option="${key}">
+          <span class="pet-option__art is-static">${petSvg({ petKey: key })}</span>
+          <span class="pet-option__name">${meta.label}</span>
+          ${key === current ? `<span class="pet-option__now">现在这位</span>` : ""}
+        </button>`
+      }).join("")}
+    </div>
+
+    <button class="btn btn--primary btn--xl" type="button" data-pet-confirm>
+      ${current === "cat" ? "还是这位" : "就选它"}
+    </button>`,
+    {
+      labelledBy: "pet-picker-title",
+      onMount(panel) {
+        const confirm = panel.querySelector("[data-pet-confirm]")
+
+        const paint = () => {
+          for (const option of panel.querySelectorAll("[data-pet-option]")) {
+            const active = option.dataset.petOption === picked
+            option.classList.toggle("is-active", active)
+            option.setAttribute("aria-checked", String(active))
+            const now = option.querySelector(".pet-option__now")
+            if (now) now.remove()
+            if (active && picked === current) {
+              const tag = document.createElement("span")
+              tag.className = "pet-option__now"
+              tag.textContent = "现在这位"
+              option.appendChild(tag)
+            }
+          }
+          if (confirm) {
+            confirm.textContent = picked === current ? "还是这位" : "就选它"
+            confirm.disabled = picked === current
+          }
+        }
+
+        for (const option of panel.querySelectorAll("[data-pet-option]")) {
+          option.addEventListener("click", () => {
+            picked = option.dataset.petOption
+            paint()
+          })
+        }
+
+        confirm?.addEventListener("click", async () => {
+          if (picked === current || state.busy) return
+          confirm.disabled = true
+          confirm.textContent = "正在换…"
+          state.busy = { action: "change-pet", petKey: picked }
+          try {
+            await doUpdateChildProfile({ childId, petKey: picked })
+          } catch (error) {
+            state.busy = null
+            confirm.disabled = false
+            confirm.textContent = "就选它"
+            toast(error?.message || "这次没换成，再点一次", "warn")
+            return
+          }
+          state.busy = null
+          closeSheet()
+          render({ keepScroll: true })
+          toast(`现在是${petMeta(picked).label}啦`, "ok")
+        })
+      },
+    },
+  )
+}
+
 function assignDraft() {
   if (state.page !== "assign") return null
   return {
@@ -962,7 +1431,6 @@ function openRewardSheet(rewardId) {
   const reward = rewardById(rewardId)
   if (!reward) return
   const isBuiltin = reward.source === "builtin"
-  const step = 5
 
   openSheet(
     `
@@ -989,36 +1457,21 @@ function openRewardSheet(rewardId) {
              </div>`
       }
 
-      <label class="sheet__label">要多少星星</label>
-      <div class="form-row form-row--bare">
-        <span class="points-view points-view--lg"><b data-edit-cost-value>${reward.cost}</b> 颗</span>
-        <div class="stepper stepper--compact">
-          <button class="stepper__btn" type="button" data-edit-cost-step="-${step}" aria-label="减少 ${step} 颗">−</button>
-          <button class="stepper__btn" type="button" data-edit-cost-step="${step}" aria-label="增加 ${step} 颗">＋</button>
-        </div>
-      </div>
-      <input type="hidden" name="cost" value="${reward.cost}" data-edit-cost-input />
-      <p class="sheet__hint">${
-        Number.isInteger(reward.defaultCost)
-          ? `系统建议 ${reward.defaultCost} 颗；改价只影响之后的新申请，已经申请的按当时的价格。`
-          : "改价只影响之后的新申请，已经申请的按当时的价格。"
-      }</p>
+      <label class="sheet__label" for="reward-edit-cost">要多少星星</label>
+      ${costFieldMarkup({
+        id: "reward-edit-cost",
+        value: reward.cost,
+        hint: Number.isInteger(reward.defaultCost)
+          ? `系统建议 ${reward.defaultCost} 颗；1–${REWARD_COST_MAX} 任意整数都行。改价只影响之后的新申请，已经申请的按当时的价格。`
+          : `1–${REWARD_COST_MAX} 任意整数都行。改价只影响之后的新申请，已经申请的按当时的价格。`,
+      })}
 
       <button class="btn btn--primary btn--xl" type="submit">保存</button>
     </form>`,
     {
       labelledBy: "reward-title",
       onMount(panel) {
-        const input = panel.querySelector("[data-edit-cost-input]")
-        const view = panel.querySelector("[data-edit-cost-value]")
-        for (const button of panel.querySelectorAll("[data-edit-cost-step]")) {
-          button.addEventListener("click", () => {
-            if (!input) return
-            const next = Math.min(300, Math.max(1, (Number(input.value) || 10) + Number(button.dataset.editCostStep)))
-            input.value = String(next)
-            if (view) view.textContent = String(next)
-          })
-        }
+        initCostFields(panel)
       },
     },
   )
@@ -1464,14 +1917,17 @@ async function handleRewardUpdate(form) {
   if (state.busy) return
   const rewardId = form.dataset.rewardEditForm
   const data = new FormData(form)
-  const cost = Number(data.get("cost"))
   const button = form.querySelector('button[type="submit"]')
   const idleHtml = button ? button.innerHTML : ""
 
-  if (!Number.isInteger(cost) || cost < 1) {
-    toast("积分至少 1 颗", "warn")
+  // 与写库同源的判断：界面怎么判，这里就怎么判，不允许"界面放过、写库报错"
+  const parsed = readCost(form)
+  if (!parsed.ok) {
+    toast(parsed.message, "warn")
+    form.querySelector("[data-cost-input]")?.focus()
     return
   }
+  const cost = parsed.value
 
   state.busy = { action: "update-reward", rewardId }
   if (button) {
@@ -1510,7 +1966,6 @@ async function handleAddReward(form) {
   const name = String(data.get("name") ?? "").trim()
   const description = String(data.get("description") ?? "")
   const iconKey = String(data.get("iconKey") ?? "sparkle")
-  const cost = Number(data.get("cost"))
   const button = form.querySelector('button[type="submit"]')
   const idleHtml = button ? button.innerHTML : ""
 
@@ -1519,10 +1974,13 @@ async function handleAddReward(form) {
     toast("先给这个奖励起个名字", "warn")
     return
   }
-  if (!Number.isInteger(cost) || cost < 1) {
-    toast("积分至少 1 颗", "warn")
+  const parsed = readCost(form)
+  if (!parsed.ok) {
+    toast(parsed.message, "warn")
+    form.querySelector("[data-cost-input]")?.focus()
     return
   }
+  const cost = parsed.value
 
   state.busy = { action: "add-reward" }
   if (button) {
@@ -2644,17 +3102,9 @@ function bindEvents() {
       return
     }
 
-    const costStepButton = event.target.closest("[data-cost-step]")
-    if (costStepButton) {
-      const input = document.querySelector("[data-cost-input]")
-      const view = document.querySelector("[data-cost-value]")
-      if (input) {
-        const next = Math.min(300, Math.max(1, (Number(input.value) || 30) + Number(costStepButton.dataset.costStep)))
-        input.value = String(next)
-        if (view) view.textContent = String(next)
-      }
-      return
-    }
+    /* ---------- M6：积分输入由 costField.js 在表单内接管 ---------- */
+    // 这里**不再**拦 [data-cost-step]：它属于具体表单，需要读本表单的输入框，
+    // 全局委托只能找到"页面上第一个 [data-cost-input]"，同时改价弹层与页面表单会串。
 
     const rewardIconButton = event.target.closest("[data-reward-icon]")
     if (rewardIconButton) {
@@ -2757,6 +3207,24 @@ function bindEvents() {
       return
     }
 
+    /* ---------- M6：孩子资料 / 头像 / 伙伴 ---------- */
+
+    if (event.target.closest("[data-open-profile]")) {
+      openChildProfileSheet(state.childId)
+      return
+    }
+
+    const editChildButton = event.target.closest("[data-edit-child]")
+    if (editChildButton) {
+      openChildProfileSheet(editChildButton.dataset.editChild)
+      return
+    }
+
+    if (event.target.closest("[data-open-pet-picker]")) {
+      openPetPickerSheet()
+      return
+    }
+
     const avatarButton = event.target.closest("[data-avatar]")
     if (avatarButton) {
       const form = avatarButton.closest("form")
@@ -2791,6 +3259,11 @@ function bindEvents() {
     if (form.matches("[data-add-child]")) {
       event.preventDefault()
       void handleAddChild(form)
+      return
+    }
+    if (form.matches("[data-profile-form]")) {
+      event.preventDefault()
+      void handleProfileSave(form)
       return
     }
     if (form.matches("[data-reward-edit-form]")) {

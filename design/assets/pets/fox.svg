@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 264 254" width="264" height="254" role="img" aria-label="小狐狸团团">
+  <!-- pet: fox ｜ 大三角耳 + 白尾尖是识别点；头身几何与其他宠物一致 -->
+  <g data-layer="background"></g>
+  <ellipse data-layer="shadow" cx="132" cy="236" rx="68" ry="11" fill="rgba(122,74,36,0.14)" />
+
+  <g data-layer="tail">
+    <path d="M174 200c34 12 58-2 56-30-1.5-16-12-27-24-26" fill="none" stroke="#8c4a22" stroke-width="30" stroke-linecap="round" />
+    <path d="M174 200c34 12 58-2 56-30-1.5-16-12-27-24-26" fill="none" stroke="#f4914f" stroke-width="21" stroke-linecap="round" />
+    <path d="M206 146c8-2 14 2 18 8" fill="none" stroke="#fff6ec" stroke-width="12" stroke-linecap="round" />
+  </g>
+
+  <g data-layer="body">
+    <ellipse cx="132" cy="180" rx="63" ry="53" fill="#f4914f" stroke="#8c4a22" stroke-width="7" />
+    <ellipse cx="132" cy="194" rx="36" ry="32" fill="#fff6ec" />
+    <path d="M96 156c2-10 10-16 19-15" fill="none" stroke="#d5722f" stroke-width="6" stroke-linecap="round" opacity="0.55" />
+    <path d="M170 160c-2-9-9-14-17-14" fill="none" stroke="#d5722f" stroke-width="6" stroke-linecap="round" opacity="0.55" />
+    <ellipse cx="106" cy="218" rx="20" ry="12.5" fill="#fff6ec" stroke="#8c4a22" stroke-width="6" />
+    <ellipse cx="158" cy="218" rx="20" ry="12.5" fill="#fff6ec" stroke="#8c4a22" stroke-width="6" />
+    <path d="M112 216v4M120 216v4M150 216v4M158 216v4" stroke="#d9a179" stroke-width="2.6" stroke-linecap="round" />
+  </g>
+
+  <g data-layer="outfit"></g>
+
+  <g data-layer="ear-left">
+    <path d="M74 82 52 14l56 32Z" fill="#f4914f" stroke="#8c4a22" stroke-width="7" stroke-linejoin="round" />
+    <path d="M78 74 62 32l34 22Z" fill="#fff6ec" />
+    <path d="M52 14 64 34l-12 6Z" fill="#5c3a25" />
+  </g>
+  <g data-layer="ear-right">
+    <path d="M190 82 212 14l-56 32Z" fill="#f4914f" stroke="#8c4a22" stroke-width="7" stroke-linejoin="round" />
+    <path d="M186 74 202 32l-34 22Z" fill="#fff6ec" />
+    <path d="M212 14 200 34l12 6Z" fill="#5c3a25" />
+  </g>
+
+  <g data-layer="head">
+    <ellipse cx="132" cy="104" rx="65" ry="57" fill="#f4914f" stroke="#8c4a22" stroke-width="7" />
+
+    <g data-layer="face">
+      <ellipse cx="86" cy="132" rx="14" ry="8.5" fill="#ff9e9e" opacity="0.4" />
+      <ellipse cx="178" cy="132" rx="14" ry="8.5" fill="#ff9e9e" opacity="0.4" />
+
+      <g data-layer="eye-left">
+        <ellipse cx="108" cy="106" rx="10.5" ry="12" fill="#3d2a1c" />
+        <circle cx="104.5" cy="101" r="3.6" fill="#ffffff" />
+        <circle cx="111.5" cy="110" r="1.9" fill="#ffffff" opacity="0.75" />
+      </g>
+      <g data-layer="eye-right">
+        <ellipse cx="156" cy="106" rx="10.5" ry="12" fill="#3d2a1c" />
+        <circle cx="152.5" cy="101" r="3.6" fill="#ffffff" />
+        <circle cx="159.5" cy="110" r="1.9" fill="#ffffff" opacity="0.75" />
+      </g>
+
+      <path d="M96 98 82 90M168 98l14-8" stroke="#5c3a25" stroke-width="4.5" stroke-linecap="round" />
+
+      <path d="M132 108c-16 0-26 9-26 18 0 9 12 15 26 15s26-6 26-15c0-9-10-18-26-18Z" fill="#fff6ec" />
+      <path d="M132 112.5 124 119h16Z" fill="#3d2a1c" stroke="#3d2a1c" stroke-width="2" stroke-linejoin="round" />
+      <path d="M132 119v5" stroke="#8c4a22" stroke-width="3.2" stroke-linecap="round" />
+      <path d="M132 125c-3.4 4.6-9.6 4.4-12.4 0.6M132 125c3.4 4.6 9.6 4.4 12.4 0.6" fill="none" stroke="#8c4a22" stroke-width="3.2" stroke-linecap="round" />
+    </g>
+  </g>
+
+  <g data-layer="ear-front"></g>
+  <g data-layer="scarf"></g>
+  <g data-layer="glasses"></g>
+  <g data-layer="hat"></g>
+
+  <g data-layer="spark" opacity="0.9">
+    <path d="M28 96c.9 5.4 2.7 7.2 8.1 8.1-5.4.9-7.2 2.7-8.1 8.1-.9-5.4-2.7-7.2-8.1-8.1 5.4-.9 7.2-2.7 8.1-8.1Z" fill="#ffc531" />
+    <path d="M238 138c.7 4 2 5.4 6 6.1-4 .7-5.3 2-6 6.1-.7-4-2-5.4-6-6.1 4-.7 5.3-2.1 6-6.1Z" fill="#ffc531" opacity="0.7" />
+  </g>
+</svg>

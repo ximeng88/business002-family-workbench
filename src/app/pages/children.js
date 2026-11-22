@@ -7,11 +7,11 @@
  */
 
 import { AVATARS, avatarOf, icon } from "../icons.js"
+import { avatarMarkup } from "../avatar.js"
 import { state } from "../store.js"
 import { escapeHtml } from "../ui.js"
 
 function cardOf(child, index) {
-  const avatar = avatarOf(child.avatarKey)
   const stat = state.childStats.find((row) => row.id === child.id)
   const active = child.id === state.childId
   const total = stat?.todayTotal ?? 0
@@ -23,11 +23,14 @@ function cardOf(child, index) {
 
   return `
     <li class="kid-card ${active ? "is-active" : ""}" style="--i:${index}">
-      <span class="kid-card__avatar">${avatar.emoji}</span>
+      <span class="kid-card__avatar">${avatarMarkup(child, { size: "md" })}</span>
       <div class="kid-card__body">
-        <h2>${escapeHtml(child.nickname)}${
-          active ? `<span class="kid-card__now">当前</span>` : ""
-        }</h2>
+        <h2>
+          ${escapeHtml(child.nickname)}
+          ${active ? `<span class="kid-card__now">当前</span>` : ""}
+          <button class="kid-card__edit" type="button" data-edit-child="${escapeHtml(child.id)}"
+            aria-label="改 ${escapeHtml(child.nickname)} 的名字或头像">${icon("edit", { size: 13 })}</button>
+        </h2>
         <p>今天 ${approved}/${total} 完成${
           pending ? ` · 待确认 ${pending}` : ""
         }${overdue ? ` · 逾期 ${overdue}` : ""}${streak ? ` · 连续 ${streak} 天` : ""}</p>

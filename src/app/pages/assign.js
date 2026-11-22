@@ -7,7 +7,8 @@
  *   之后每天启动时由 `template.service` 自动生成，靠 `generationKey` 防重。
  */
 
-import { avatarOf, icon, subjectOf } from "../icons.js"
+import { avatarMarkup } from "../avatar.js"
+import { icon, subjectOf } from "../icons.js"
 import { state } from "../store.js"
 import { WEEKDAY_OPTIONS, childNamesOf, describeTemplate } from "../../services/template.service.js"
 import { dateKeyOffset, dateLabelOffset, describeDateKey, escapeHtml } from "../ui.js"
@@ -80,12 +81,11 @@ function childPicker() {
       <div class="kid-strip kid-strip--inline" role="tablist" aria-label="选择孩子">
         ${state.children
           .map((child) => {
-            const avatar = avatarOf(child.avatarKey)
             const active = child.id === state.childId
             return `
               <button class="kid-chip ${active ? "is-active" : ""}" type="button"
                 role="tab" aria-selected="${active}" data-switch-child="${escapeHtml(child.id)}">
-                <span class="kid-chip__avatar">${avatar.emoji}</span>
+                <span class="kid-chip__avatar">${avatarMarkup(child, { size: "xs" })}</span>
                 <span class="kid-chip__name">${escapeHtml(child.nickname)}</span>
               </button>`
           })
@@ -164,7 +164,6 @@ function templateRows() {
 }
 
 export function renderAssign() {
-  const avatar = avatarOf(state.child?.avatarKey)
   const nickname = state.child?.nickname ?? "孩子"
 
   return `
@@ -173,7 +172,7 @@ export function renderAssign() {
 
     <div class="parent-hero parent-hero--assign">
       <div class="parent-hero__text">
-        <p class="parent-hero__kicker">家长模式 · ${avatar.emoji} ${escapeHtml(nickname)}</p>
+        <p class="parent-hero__kicker">家长模式 · ${escapeHtml(nickname)}</p>
         <h2>布置一件小事</h2>
         <p class="parent-hero__sub">布置后会出现在 ${escapeHtml(nickname)} 的列表里；做完提交、你点头才发星星。</p>
       </div>

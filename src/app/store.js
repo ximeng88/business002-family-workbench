@@ -21,7 +21,7 @@ import {
   undoLastRestore,
   wipeAllData,
 } from "../services/backup.service.js"
-import { createChild, listChildren } from "../services/child.service.js"
+import { createChild, listChildren, updateChildProfile } from "../services/child.service.js"
 import { equipCostume, listCostumeCollection, unequipCostume } from "../services/costume.service.js"
 import {
   checkParentPin,
@@ -414,6 +414,22 @@ export async function doCreateChild({ nickname, avatarKey }) {
   const child = await createChild({ nickname, avatarKey })
   state.children = await listChildren()
   await switchChild(child.id)
+  return child
+}
+
+/**
+ * 改孩子资料：昵称 / 头像 / 宠物（M6）。
+ * 只刷新 `children` 与当前孩子，**不重载任务与流水**——改名字不会让任务变样，
+ * 整页重载反而会把正在输入的内容冲掉。
+ *
+ * @param {{ childId: string, nickname?: string, avatarKey?: string, avatarImage?: string|null, petKey?: string }} input
+ */
+export async function doUpdateChildProfile({ childId, nickname, avatarKey, avatarImage, petKey }) {
+  const child = await updateChildProfile({ childId, nickname, avatarKey, avatarImage, petKey })
+  state.children = await listChildren()
+  if (child.id === state.childId) {
+    state.child = state.children.find((row) => row.id === child.id) ?? child
+  }
   return child
 }
 

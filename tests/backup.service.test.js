@@ -36,7 +36,7 @@ import {
 } from "../src/services/backup.service.js"
 import { getBalance, adjustPoints } from "../src/services/points.service.js"
 import { getPinStatus, setParentPin } from "../src/services/pin.service.js"
-import { createChild } from "../src/services/child.service.js"
+import { createChild, getChild, updateChildProfile } from "../src/services/child.service.js"
 import { ensureSeedData, M0_CHILD_ID, submitTask } from "../src/services/task.service.js"
 
 async function useCleanDatabase(t) {
@@ -438,4 +438,68 @@ test("M4-BK13 清空后的库还能正常打开（再关再开不报 INVALID_STA
   assert.equal(await getDb().children.count(), 0)
   assert.equal(await getDb().settings.count(), 0)
   assert.equal(await readSchemaVersion(), SCHEMA_VERSION)
+})
+
+/* ---------------- M6：头像进备份 ---------------- */
+
+const AVATAR_JPEG = `data:image/jpeg;base64,${"B".repeat(96)}`
+
+test("M6-BK1 头像（dataURL）随整表导出，恢复后一模一样", async (t) => {
+  await useCleanDatabase(t)
+  await ensureSeedData()
+  const child = await createChild({ nickname: "小美", avatarKey: "rabbit" })
+  await updateChildProfile({
+    childId: child.id,
+    avatarImage: AVATAR_JPEG,
+    petKey: "fox",
+    nickname: "小美美",
+  })
+
+  const exported = await exportBackup()
+  const row = exported.payload.data[TABLE_NAMES.CHILDREN].find((item) => item.id === child.id)
+  assert.equal(row.avatarImage, AVATAR_JPEG, "备份必须带图片本体，而不是 blob: 地址")
+  assert.equal(row.petKey, "fox")
+  assert.equal(row.nickname, "小美美")
+
+  // 往返：解析 → 恢复 → 头像 / 昵称 / 伙伴都回来
+  const summary = parseBackupText(exported.text)
+  assert.equal(summary.counts[TABLE_NAMES.CHILDREN], 2)
+  await restoreBackup(exported.text)
+  const restored = await getChild(child.id)
+  assert.equal(restored.avatarImage, AVATAR_JPEG)
+  assert.equal(restored.avatarKey, "rabbit", "照片与预设 key 是两个字段，都要回来")
+  assert.equal(restored.petKey, "fox")
+  assert.equal(restored.nickname, "小美美")
+})
+
+test("M6-BK2 头像不是合法图片数据时整份备份被拒，库内一条不动", async (t) => {
+  await useCleanDatabase(t)
+  await ensureSeedData()
+  await createChild({ nickname: "小美" })
+
+  const exported = await exportBackup()
+  const bad = JSON.parse(exported.text)
+  bad.data[TABLE_NAMES.CHILDREN][0].avatarImage = '"><img src=x onerror=alert(1)>'
+
+  assert.throws(
+    () => validateBackupPayload(bad),
+    (error) => error?.code === DB_ERROR_CODES.VALIDATION_FAILED && /头像/.test(error.message),
+  )
+
+  const before = await getDb().children.count()
+  await assert.rejects(restoreBackup(bad))
+  assert.equal(await getDb().children.count(), before)
+  assert.equal(Object.hasOwn(await getChild(M0_CHILD_ID), "avatarImage"), false)
+})
+
+test("M6-BK3 彻底清空：头像随孩子一起消失，不留孤儿", async (t) => {
+  await useCleanDatabase(t)
+  await ensureSeedData()
+  const child = await createChild({ nickname: "小美" })
+  await updateChildProfile({ childId: child.id, avatarImage: AVATAR_JPEG })
+
+  await wipeAllData()
+  assert.equal(await getDb().children.count(), 0)
+  const rows = await getDb().children.toArray()
+  assert.equal(rows.some((row) => typeof row.avatarImage === "string"), false)
 })

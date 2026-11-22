@@ -17,9 +17,13 @@ import { DB_NAME } from "../src/db/schema.js"
 import { DB_ERROR_CODES } from "../src/db/errors.js"
 import {
   BUILTIN_REWARD_TEMPLATES,
+  REWARD_COST_MAX,
+  REWARD_COST_MIN,
+  REWARD_COST_QUICK_PICKS,
   createCustomReward,
   ensureBuiltinRewardConfigs,
   listRewards,
+  parseRewardCost,
   setRewardEnabled,
   updateReward,
 } from "../src/services/reward.service.js"
@@ -143,4 +147,80 @@ test("M2-RW5 停用只影响新申请：enabledOnly 过滤，记录与历史保�
 
   const all = await listRewards()
   assert.equal(all.length, 11, "停用不是删除")
+})
+
+/* ---------------- M6：积分自由输入 ---------------- */
+
+test("M6-RW1 parseRewardCost：任意正整数都过，非法值一律拦住且不纠正", () => {
+  assert.equal(REWARD_COST_MIN, 1)
+  assert.equal(REWARD_COST_MAX, 10000)
+
+  for (const value of [1, 7, 13, 99, 100, 250, 999, 1000, 9999, 10000]) {
+    const parsed = parseRewardCost(String(value))
+    assert.equal(parsed.ok, true, `${value} 应该合法`)
+    assert.equal(parsed.value, value)
+  }
+
+  // 前导零是合法整数，不拦也不改写
+  assert.deepEqual(parseRewardCost("007"), { ok: true, value: 7 })
+
+  const cases = [
+    ["", "empty"],
+    ["   ", "empty"],
+    ["0", "min"],
+    ["-5", "negative"],
+    ["13.5", "decimal"],
+    ["13.", "decimal"],
+    ["abc", "shape"],
+    ["1e3", "shape"],
+    ["10001", "max"],
+  ]
+  for (const [input, reason] of cases) {
+    const parsed = parseRewardCost(input)
+    assert.equal(parsed.ok, false, `${input} 应该被拦住`)
+    assert.equal(parsed.reason, reason, input)
+    assert.equal(typeof parsed.message, "string")
+    assert.equal(parsed.message.length > 0, true)
+  }
+
+  assert.deepEqual([...REWARD_COST_QUICK_PICKS], [5, 10, 20, 30, 50, 100])
+})
+
+test("M6-RW2 上限提到 10000：写库接受 10000，10001 与 0 被拒", async (t) => {
+  await useCleanDatabase(t)
+  await ensureBuiltinRewardConfigs()
+
+  const high = await updateReward({ rewardId: "rw_life_book", cost: 10000 })
+  assert.equal(high.cost, 10000)
+
+  const odd = await updateReward({ rewardId: "rw_life_book", cost: 13 })
+  assert.equal(odd.cost, 13, "不再限定 5 / 10 的倍数")
+
+  for (const bad of [0, -1, 10001, 12.5, "30", null]) {
+    await assert.rejects(
+      updateReward({ rewardId: "rw_life_book", cost: bad }),
+      (error) => error?.code === DB_ERROR_CODES.VALIDATION_FAILED,
+      String(bad),
+    )
+  }
+
+  // 被拒之后价格仍是上一次成功的值
+  const rows = await listRewards()
+  assert.equal(rows.find((row) => row.id === "rw_life_book").cost, 13)
+})
+
+test("M6-RW3 自定义奖励同样支持任意整数，改价不回默认", async (t) => {
+  await useCleanDatabase(t)
+  await ensureBuiltinRewardConfigs()
+
+  const custom = await createCustomReward({ name: "周末露营", cost: 137 })
+  assert.equal(custom.cost, 137)
+
+  const updated = await updateReward({ rewardId: custom.id, cost: 88 })
+  assert.equal(updated.cost, 88)
+
+  // 重新补齐内置配置不能把家长改过的价格覆盖掉
+  await ensureBuiltinRewardConfigs()
+  const rows = await listRewards()
+  assert.equal(rows.find((row) => row.id === custom.id).cost, 88)
 })

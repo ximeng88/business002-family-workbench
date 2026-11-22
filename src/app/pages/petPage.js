@@ -11,7 +11,8 @@
  */
 
 import { icon } from "../icons.js"
-import { catSvg, costumeThumb, hasNightBackground, levelInfo, levelTitle } from "../pet.js"
+import { avatarMarkup } from "../avatar.js"
+import { costumeThumb, hasNightBackground, levelInfo, levelTitle, petMeta, petSvg } from "../pet.js"
 import { COSTUME_SLOTS, COSTUME_SLOT_LABEL } from "../../services/costume.service.js"
 import { isCostumeOwned, pendingRedemptionsOf, state, wornIn } from "../store.js"
 import { describeDateKey, describeTime, escapeHtml } from "../ui.js"
@@ -274,10 +275,21 @@ export function renderPetPage() {
   const remain = level.need - level.inLevel
   const night = hasNightBackground(state.costume.worn)
   const selection = shopSelection()
+  const petKey = state.child?.petKey ?? "cat"
+  const species = petMeta(petKey).label
 
   return `
   <section class="page page--pet ${selection.count ? "has-shop-bar" : ""}" data-page-view="pet" aria-labelledby="pet-heading">
     <h1 class="sr-only" id="pet-heading">宠物与积分</h1>
+
+    <div class="me-card">
+      ${avatarMarkup(state.child, { size: "md", className: "me-card__avatar" })}
+      <div class="me-card__body">
+        <strong>${escapeHtml(state.child?.nickname ?? "小朋友")}</strong>
+        <span>改名字、换头像都在这里</span>
+      </div>
+      <button class="ghost-pill" type="button" data-open-profile>改资料</button>
+    </div>
 
     <div class="pet-stage ${night ? "is-night" : ""}">
       <div class="pet-stage__sky" aria-hidden="true">
@@ -288,8 +300,12 @@ export function renderPetPage() {
         <span class="twinkle twinkle--3">${icon("starSolid", { size: 14 })}</span>
       </div>
       <p class="pet-stage__badge">Lv.${level.level}<span>· ${levelTitle(level.level)}</span></p>
-      <div class="pet-stage__cat">${catSvg({ worn: state.costume.worn })}</div>
+      <button class="pet-stage__switch" type="button" data-open-pet-picker>
+        ${icon("repeat", { size: 13 })}换个伙伴
+      </button>
+      <div class="pet-stage__cat">${petSvg({ petKey, worn: state.costume.worn })}</div>
       <h2 class="pet-stage__name">团团</h2>
+      <p class="pet-stage__species">${species}</p>
       <p class="pet-stage__hint">${
         level.inLevel === 0
           ? "多完成一件小事，就能看见它长大"

@@ -7,7 +7,23 @@
  * 装扮只改外观（PRD §7.4）：图层直接画在同一个 264×254 坐标系里，
  * 因此帽子会跟着头一起晃、围巾贴着脖子，不需要额外定位计算。
  * 每个 slot 一件，未穿戴时对应图层完全不渲染。
+ *
+ * M6 起支持五种伙伴（小猫 / 小熊 / 小兔 / 小狗 / 小狐狸）。
+ * 五只共用同一套骨相与装扮锚点（见 `petArt.js`），所以：
+ * - 换伙伴只换 `petKey`，**不动**经验、等级、收藏与当前穿戴；
+ * - 五件装扮对五只全部可用，不需要为每只单独适配。
  */
+
+import { PET_ART, PET_META } from "./petArt.js"
+
+/** 可选伙伴（顺序即选择页顺序） */
+export const PET_KEYS = Object.freeze(Object.keys(PET_ART))
+export const PET_DEFAULT = "cat"
+
+/** 宠物元信息（名字），未知 key 回落到小猫 */
+export function petMeta(petKey) {
+  return PET_META[petKey] ?? PET_META[PET_DEFAULT]
+}
 
 /** 每级所需经验 */
 export const EXP_PER_LEVEL = 40
@@ -146,88 +162,47 @@ export function hasNightBackground(worn) {
 }
 
 /**
- * 精致橘猫 + 装扮叠层。分层：背景 / 影子 / 尾巴 / 身体 / 服饰 / 脚 / 耳朵 / 头 / 围巾 / 眼镜 / 帽子。
- * 动画全部交给 CSS（.cat__tail / .cat__head / .cat__eye 等）。
+ * 宠物本体 + 装扮叠层。
  *
- * @param {{ worn?: Record<string, string>, className?: string }} [options]
+ * 图层顺序**不能改**（design/07 §4）：
+ *   background → shadow → tail → body → outfit → ear → head → ear-front
+ *   → scarf → glasses → hat → spark
+ * 改顺序会让帽子被头挡住、或垂耳盖住镜片。
+ *
+ * @param {{ petKey?: string, worn?: Record<string, string>, className?: string }} [options]
  */
-export function catSvg({ worn = {}, className = "" } = {}) {
+export function petSvg({ petKey = PET_DEFAULT, worn = {}, className = "" } = {}) {
+  const key = PET_ART[petKey] ? petKey : PET_DEFAULT
+  const art = PET_ART[key]
+  const meta = petMeta(key)
+  const part = (name) => art[name] ?? ""
+
   return `
-<svg class="cat ${className}" viewBox="0 0 264 254" role="img" aria-label="橘猫团团">
+<svg class="cat ${className}" viewBox="0 0 264 254" role="img" aria-label="${meta.label}团团">
   ${layerFor(worn, "background")}
-
-  <ellipse cx="132" cy="236" rx="68" ry="11" fill="rgba(122,74,36,0.14)" />
-
-  <g class="cat__tail">
-    <path d="M178 200c32 8 52-10 47-38-2.4-14-12-23-23-20"
-      fill="none" stroke="#7a4a24" stroke-width="25" stroke-linecap="round" />
-    <path d="M178 200c32 8 52-10 47-38-2.4-14-12-23-23-20"
-      fill="none" stroke="#f7a751" stroke-width="17" stroke-linecap="round" />
-    <path d="M212 178c7-4 11-11 11-18"
-      fill="none" stroke="#ffcf9a" stroke-width="5" stroke-linecap="round" />
-  </g>
-
-  <g class="cat__body">
-    <ellipse cx="132" cy="180" rx="63" ry="53" fill="#f9b268" stroke="#7a4a24" stroke-width="7" />
-    <ellipse cx="132" cy="192" rx="40" ry="34" fill="#ffe3c1" />
-    <path d="M96 156c2-10 10-16 19-15" fill="none" stroke="#e08a35" stroke-width="6" stroke-linecap="round" opacity="0.55" />
-    <path d="M170 160c-2-9-9-14-17-14" fill="none" stroke="#e08a35" stroke-width="6" stroke-linecap="round" opacity="0.55" />
-    <ellipse cx="106" cy="218" rx="20" ry="12.5" fill="#ffe3c1" stroke="#7a4a24" stroke-width="6" />
-    <ellipse cx="158" cy="218" rx="20" ry="12.5" fill="#ffe3c1" stroke="#7a4a24" stroke-width="6" />
-    <path d="M112 216v4M120 216v4M150 216v4M158 216v4" stroke="#e4a877" stroke-width="2.6" stroke-linecap="round" />
-  </g>
-
+  ${part("shadow")}
+  ${part("tail")}
+  ${part("body")}
   ${layerFor(worn, "outfit")}
-
-  <g class="cat__ear cat__ear--left">
-    <path d="M76 82 62 34l46 24Z" fill="#f9b268" stroke="#7a4a24" stroke-width="7" stroke-linejoin="round" />
-    <path d="M82 70 74 46l22 12Z" fill="#ffb3a6" />
-  </g>
-  <g class="cat__ear cat__ear--right">
-    <path d="M188 82 202 34l-46 24Z" fill="#f9b268" stroke="#7a4a24" stroke-width="7" stroke-linejoin="round" />
-    <path d="M182 70 190 46l-22 12Z" fill="#ffb3a6" />
-  </g>
-
-  <g class="cat__head">
-    <ellipse cx="132" cy="104" rx="65" ry="57" fill="#f9b268" stroke="#7a4a24" stroke-width="7" />
-    <path d="M118 54v13M132 50v16M146 54v13" stroke="#e08a35" stroke-width="6" stroke-linecap="round" opacity="0.7" />
-    <path d="M132 47c-3-13 3-20 11-17" fill="none" stroke="#7a4a24" stroke-width="5" stroke-linecap="round" />
-
-    <ellipse cx="87" cy="130" rx="14" ry="8.5" fill="#ff9e9e" opacity="0.42" />
-    <ellipse cx="177" cy="130" rx="14" ry="8.5" fill="#ff9e9e" opacity="0.42" />
-
-    <g class="cat__eye cat__eye--left">
-      <ellipse cx="108" cy="106" rx="10.5" ry="12.5" fill="#4a2e1e" />
-      <circle cx="104.5" cy="101" r="3.6" fill="#ffffff" />
-      <circle cx="111.5" cy="110" r="1.9" fill="#ffffff" opacity="0.75" />
-    </g>
-    <g class="cat__eye cat__eye--right">
-      <ellipse cx="156" cy="106" rx="10.5" ry="12.5" fill="#4a2e1e" />
-      <circle cx="152.5" cy="101" r="3.6" fill="#ffffff" />
-      <circle cx="159.5" cy="110" r="1.9" fill="#ffffff" opacity="0.75" />
-    </g>
-
-    <ellipse cx="120" cy="124" rx="16" ry="12" fill="#ffe3c1" />
-    <ellipse cx="144" cy="124" rx="16" ry="12" fill="#ffe3c1" />
-    <path d="M132 114.5 125 109h14Z" fill="#e8638b" stroke="#e8638b" stroke-width="2" stroke-linejoin="round" />
-    <path d="M132 115v5.5" stroke="#7a4a24" stroke-width="3.4" stroke-linecap="round" />
-    <path d="M132 120.5c-4.4 6-12 5.2-15.2 0.6M132 120.5c4.4 6 12 5.2 15.2 0.6"
-      fill="none" stroke="#7a4a24" stroke-width="3.4" stroke-linecap="round" />
-
-    <path d="M96 118 78 114M96 126 79 128M168 118l18-4M168 126l17 2"
-      stroke="#7a4a24" stroke-width="2.8" stroke-linecap="round" opacity="0.45" />
-  </g>
-
+  ${part("earLeft")}
+  ${part("earRight")}
+  ${part("head")}
+  ${part("earFrontLeft")}
+  ${part("earFrontRight")}
+  ${part("earFront")}
   ${layerFor(worn, "scarf")}
   ${layerFor(worn, "glasses")}
   ${layerFor(worn, "hat")}
-
-  <g class="cat__spark" opacity="0.9">
-    <path d="M28 96c.9 5.4 2.7 7.2 8.1 8.1-5.4.9-7.2 2.7-8.1 8.1-.9-5.4-2.7-7.2-8.1-8.1 5.4-.9 7.2-2.7 8.1-8.1Z" fill="#ffc531" />
-    <path d="M238 138c.7 4 2 5.4 6 6.1-4 .7-5.3 2-6 6.1-.7-4-2-5.4-6-6.1 4-.7 5.3-2.1 6-6.1Z" fill="#8b7cff" opacity="0.7" />
-    <path d="M222 62c.6 3.4 1.7 4.5 5.1 5.1-3.4.6-4.5 1.7-5.1 5.1-.6-3.4-1.7-4.5-5.1-5.1 3.4-.6 4.5-1.7 5.1-5.1Z" fill="#4c9aff" opacity="0.6" />
-  </g>
+  ${part("spark")}
 </svg>`
+}
+
+/**
+ * 兼容入口：M2 起界面一直调用 `catSvg()`，宠物变多种后保留这个名字，
+ * 内部走 `petSvg`，避免一次性改所有调用点。
+ */
+export function catSvg(options = {}) {
+  return petSvg({ ...options, petKey: "cat" })
 }
 
 /* ---------------- 商城缩略图 ---------------- */

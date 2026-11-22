@@ -16,7 +16,15 @@ import { closeDb, getDb, openDatabase } from "../src/db/database.js"
 import { DB_NAME, SCHEMA_VERSION } from "../src/db/schema.js"
 import { DB_ERROR_CODES } from "../src/db/errors.js"
 import { approveTask } from "../src/services/approval.service.js"
-import { createChild, getChild, listChildren, CHILD_AVATAR_KEYS } from "../src/services/child.service.js"
+import {
+  CHILD_AVATAR_IMAGE_MAX_CHARS,
+  CHILD_AVATAR_KEYS,
+  CHILD_PET_KEYS,
+  createChild,
+  getChild,
+  listChildren,
+  updateChildProfile,
+} from "../src/services/child.service.js"
 import { getBalance } from "../src/services/points.service.js"
 import { createTask, ensureSeedData, listTodayTasks, M0_CHILD_ID, submitTask } from "../src/services/task.service.js"
 
@@ -115,4 +123,121 @@ test("M1-CH4 给不存在的孩子布置任务：拒绝且不写库", async (t) 
     (error) => error?.code === DB_ERROR_CODES.VALIDATION_FAILED,
   )
   assert.equal(await getDb().tasks.count(), 5)
+})
+
+/* ---------------- M6：资料可改（昵称 / 头像 / 伙伴） ---------------- */
+
+const TINY_JPEG = `data:image/jpeg;base64,${"A".repeat(64)}`
+
+test("M6-CH1 改昵称：只动 nickname，其它字段与其它表一个字节都不变", async (t) => {
+  await useCleanDatabase(t)
+  await ensureSeedData()
+  const child = await createChild({ nickname: "小明", avatarKey: "rabbit" })
+
+  const before = {
+    tasks: await getDb().tasks.count(),
+    ledger: await getDb().pointLedger.count(),
+    exp: await getDb().petProgress.count(),
+    streaks: await getDb().streaks.count(),
+  }
+
+  const updated = await updateChildProfile({ childId: child.id, nickname: "  小明明  " })
+  assert.equal(updated.nickname, "小明明")
+  assert.equal(updated.avatarKey, "rabbit", "没传的字段不能被清掉")
+  assert.equal(updated.hasChildPin, false)
+  assert.equal(updated.createdAt, child.createdAt)
+  assert.equal((await getChild(child.id)).nickname, "小明明")
+
+  // 兄弟孩子不受影响
+  assert.equal((await getChild(M0_CHILD_ID)).nickname, "朵朵")
+
+  assert.equal(await getDb().tasks.count(), before.tasks)
+  assert.equal(await getDb().pointLedger.count(), before.ledger)
+  assert.equal(await getDb().petProgress.count(), before.exp)
+  assert.equal(await getDb().streaks.count(), before.streaks)
+})
+
+test("M6-CH2 头像两个字段互不覆盖：上传保留 avatarKey，恢复默认保留 avatarKey", async (t) => {
+  await useCleanDatabase(t)
+  await ensureSeedData()
+  const child = await createChild({ nickname: "小明", avatarKey: "fox" })
+
+  const withImage = await updateChildProfile({ childId: child.id, avatarImage: TINY_JPEG })
+  assert.equal(withImage.avatarImage, TINY_JPEG)
+  assert.equal(withImage.avatarKey, "fox", "上传照片不能把预设 key 删掉，它是恢复默认的落点")
+
+  // 恢复默认 = 传 null
+  const reset = await updateChildProfile({ childId: child.id, avatarImage: null })
+  assert.equal(Object.hasOwn(reset, "avatarImage"), false, "恢复默认要真正删掉字段，而不是写空串")
+  assert.equal(reset.avatarKey, "fox")
+
+  // 换预设 + 同时清图片
+  const switched = await updateChildProfile({ childId: child.id, avatarKey: "panda", avatarImage: null })
+  assert.equal(switched.avatarKey, "panda")
+  assert.equal(Object.hasOwn(switched, "avatarImage"), false)
+})
+
+test("M6-CH3 非法入参全部在写库前被拒，原记录保持不变", async (t) => {
+  await useCleanDatabase(t)
+  await ensureSeedData()
+  const child = await createChild({ nickname: "小明", avatarKey: "cat" })
+
+  const invalid = [
+    { nickname: "   " },
+    { nickname: "一二三四五六七八九十一二三" },
+    { avatarKey: "dragon-unknown" },
+    { avatarImage: "https://example.com/a.jpg" },
+    { avatarImage: "blob:http://localhost/abc" },
+    { avatarImage: `data:image/jpeg;base64,${"A".repeat(CHILD_AVATAR_IMAGE_MAX_CHARS)}` },
+    { petKey: "dragon-unknown" },
+  ]
+  for (const patch of invalid) {
+    await assert.rejects(
+      updateChildProfile({ childId: child.id, ...patch }),
+      (error) => error?.code === DB_ERROR_CODES.VALIDATION_FAILED,
+      JSON.stringify(patch).slice(0, 60),
+    )
+  }
+
+  const current = await getChild(child.id)
+  assert.equal(current.nickname, "小明")
+  assert.equal(current.avatarKey, "cat")
+  assert.equal(Object.hasOwn(current, "avatarImage"), false)
+  assert.equal(Object.hasOwn(current, "petKey"), false)
+})
+
+test("M6-CH4 空改动与不存在的孩子都被拒", async (t) => {
+  await useCleanDatabase(t)
+  await ensureSeedData()
+  const child = await createChild({ nickname: "小明" })
+
+  await assert.rejects(
+    updateChildProfile({ childId: child.id }),
+    (error) => error?.code === DB_ERROR_CODES.VALIDATION_FAILED,
+  )
+  await assert.rejects(
+    updateChildProfile({ childId: "child_not_exist", nickname: "幽灵" }),
+    (error) => error?.code === DB_ERROR_CODES.VALIDATION_FAILED,
+  )
+  await assert.rejects(
+    updateChildProfile({ childId: "", nickname: "空 id" }),
+    (error) => error?.code === DB_ERROR_CODES.VALIDATION_FAILED,
+  )
+})
+
+test("M6-CH5 换伙伴只写 petKey，不动经验 / 等级来源 / 装扮", async (t) => {
+  await useCleanDatabase(t)
+  await ensureSeedData()
+  const child = await createChild({ nickname: "小明" })
+
+  for (const petKey of CHILD_PET_KEYS) {
+    const updated = await updateChildProfile({ childId: child.id, petKey })
+    assert.equal(updated.petKey, petKey)
+    assert.equal(updated.nickname, "小明")
+  }
+
+  assert.equal(CHILD_PET_KEYS.length, 5, "本轮内置五种伙伴")
+  assert.equal(await getDb().petProgress.count(), 0, "换伙伴不写经验流水")
+  assert.equal(await getDb().pointLedger.count(), 0, "换伙伴不写积分流水")
+  assert.equal(await getDb().children.count(), 2)
 })

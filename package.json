@@ -1,6 +1,6 @@
 {
   "name": "business002-family-workbench",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "小学生学习家庭工作台（PWA，本地优先，无后端）",

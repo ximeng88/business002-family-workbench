@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>设计稿 · 孩子资料与头像（P-P5 孩子管理 / P-C3 我的伙伴）</title>
+<style>
+  :root {
+    --bg-warm: #fff8f0; --bg-cool: #f1f6ff; --surface: #fff; --surface-warm: #fffaf3; --surface-sunk: #fbf5ec;
+    --orange-50: #fff2e6; --orange-100: #ffe0c4; --orange-500: #ff8a3d; --orange-600: #f2701b; --orange-700: #c9540c;
+    --parent-700: #2f5fd0; --parent-600: #3a6ee0; --parent-50: #eaf0ff; --parent-line: #dde6f7; --parent-900: #16233c;
+    --parent-danger: #d64545; --parent-danger-soft: #fdeaea;
+    --star-500: #ffc531; --red-soft: #fdeaea; --red: #d64545;
+    --ink-900: #2a241d; --ink-700: #554b3f; --ink-500: #857a6c; --ink-300: #b3a897;
+    --line: #f1e6d8; --line-strong: #e6d7c4;
+    --r-sm: 14px; --r-md: 20px; --r-lg: 26px; --r-xl: 34px; --r-pill: 999px;
+    --shadow-1: 0 2px 8px rgba(154,112,62,.06); --shadow-2: 0 12px 26px -14px rgba(150,102,48,.36);
+    --shadow-parent: 0 1px 2px rgba(22,35,60,.06), 0 8px 20px -14px rgba(22,35,60,.28);
+    --font-round: "PingFang SC", "HarmonyOS Sans SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--font-round); background: #efe7db; color: var(--ink-900);
+    font-variant-numeric: tabular-nums; padding: 28px 0 60px;
+  }
+  .board { width: 430px; margin: 0 auto; }
+  .board > h1 { font-size: 15px; letter-spacing: .4px; color: #6b5f52; margin: 0 0 14px; font-weight: 700; }
+  .screen {
+    width: 430px; min-height: 860px; background: var(--bg-warm); border-radius: 28px; overflow: hidden;
+    box-shadow: 0 18px 40px -24px rgba(90,60,30,.5); margin-bottom: 34px; position: relative;
+    display: flex; flex-direction: column;
+  }
+  .screen--parent { background: #f6f8fc; }
+  .tag {
+    position: absolute; top: 0; left: 0; z-index: 9; font-size: 11px; font-weight: 700; letter-spacing: .4px;
+    padding: 5px 10px; border-bottom-right-radius: 10px; color: #fff; background: #b3a897;
+  }
+  .tag--kid { background: var(--orange-500); }
+  .tag--p { background: var(--parent-700); }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 34px 18px 8px; }
+  .topbar__title { font-size: 16px; font-weight: 600; color: var(--ink-700); }
+  .screen--parent .topbar__title { color: #40506b; }
+  .ghost { width: 40px; }
+
+  .content { flex: 1; padding: 10px 20px 28px; }
+  .screen--parent .content { padding: 10px 16px 28px; }
+
+  /* 头像块 */
+  .avatar-block { display: flex; flex-direction: column; align-items: center; padding: 18px 0 26px; }
+  .avatar-wrap { position: relative; width: 112px; height: 112px; }
+  .avatar {
+    width: 112px; height: 112px; border-radius: 50%; overflow: hidden;
+    background: linear-gradient(150deg, #ffd9b0, #ffb877 62%, #ff9d5c);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 40px; font-weight: 800; letter-spacing: 1px;
+    box-shadow: 0 10px 22px -12px rgba(242,112,27,.7); border: 4px solid #fff;
+  }
+  .avatar--photo { background: linear-gradient(150deg, #ffd3e0, #ffa9c4 55%, #ff86ac); }
+  .avatar__cam {
+    position: absolute; right: -2px; bottom: -2px; width: 38px; height: 38px; border-radius: 50%;
+    background: var(--orange-500); border: 3px solid #fff; display: flex; align-items: center; justify-content: center;
+    color: #fff; box-shadow: 0 4px 10px -4px rgba(242,112,27,.8);
+  }
+  .screen--parent .avatar__cam { background: var(--parent-700); box-shadow: 0 4px 10px -4px rgba(47,95,208,.7); }
+  .avatar__cam svg { width: 18px; height: 18px; }
+  .avatar-hint { margin: 12px 0 0; font-size: 13px; color: var(--ink-500); }
+  .screen--parent .avatar-hint { color: #71809a; }
+
+  /* 卡片 */
+  .card {
+    background: #fff; border-radius: var(--r-lg); padding: 18px; box-shadow: var(--shadow-1);
+    border: 1px solid var(--line);
+  }
+  .screen--parent .card { border-radius: 14px; border-color: var(--parent-line); box-shadow: var(--shadow-parent); }
+  .card + .card { margin-top: 14px; }
+  .card__label { font-size: 12px; font-weight: 700; letter-spacing: .3px; color: var(--ink-500); margin: 0 0 10px; }
+  .screen--parent .card__label { color: #71809a; }
+
+  .name-row { display: flex; align-items: center; gap: 10px; }
+  .name-row__value { flex: 1; font-size: 21px; font-weight: 700; line-height: 30px; }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-warm);
+    display: flex; align-items: center; justify-content: center; color: var(--ink-500); cursor: pointer;
+  }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .screen--parent .icon-btn { border-color: var(--parent-line); background: #f7f9ff; color: var(--parent-700); }
+
+  /* 输入 */
+  .field { position: relative; }
+  .input {
+    width: 100%; height: 54px; border-radius: var(--r-sm); border: 2px solid var(--line-strong);
+    background: var(--surface-warm); padding: 0 62px 0 14px; font-family: inherit; font-size: 19px; font-weight: 600;
+    color: var(--ink-900); outline: none;
+  }
+  .input::placeholder { color: var(--ink-300); font-weight: 400; }
+  .input:focus { border-color: var(--orange-500); background: #fff; }
+  .screen--parent .input { border-radius: 10px; border-color: var(--parent-line); background: #f7f9ff; font-size: 17px; }
+  .screen--parent .input:focus { border-color: var(--parent-600); background: #fff; }
+  .input__count {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 12px; color: var(--ink-300);
+  }
+  .input--invalid { border-color: var(--red); background: #fff6f6; }
+  .field__err { display: flex; gap: 6px; align-items: center; margin: 8px 0 0; font-size: 13px; color: var(--red); }
+  .field__err svg { width: 15px; height: 15px; flex: none; }
+
+  .actions { display: flex; gap: 10px; margin-top: 14px; }
+  .btn {
+    flex: 1; height: 52px; border: 0; border-radius: var(--r-pill); cursor: pointer; font-family: inherit;
+    font-size: 17px; font-weight: 700; color: #fff; background: var(--orange-500);
+  }
+  .btn--ghost { background: transparent; color: var(--ink-700); border: 2px solid var(--line-strong); }
+  .screen--parent .btn { background: var(--parent-700); border-radius: 12px; }
+  .screen--parent .btn--ghost { background: #fff; color: #40506b; border-color: var(--parent-line); }
+  .btn[disabled] { background: #ddd2c4; color: #fff; border: 0; }
+  .screen--parent .btn[disabled] { background: #c9d4e8; }
+
+  /* 头像来源选择 */
+  .sheet {
+    background: #fff; border-radius: 26px 26px 0 0; padding: 8px 20px 22px; box-shadow: 0 -12px 30px -18px rgba(90,60,30,.4);
+  }
+  .sheet__bar { width: 44px; height: 5px; border-radius: 3px; background: var(--line-strong); margin: 6px auto 14px; }
+  .sheet__title { margin: 0 0 4px; font-size: 19px; font-weight: 800; }
+  .sheet__sub { margin: 0 0 16px; font-size: 13px; line-height: 19px; color: var(--ink-500); }
+
+  .source-list { display: grid; gap: 10px; }
+  .source {
+    display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: var(--r-md);
+    border: 1px solid var(--line); background: var(--surface-warm); text-align: left; cursor: pointer; font-family: inherit;
+  }
+  .source__ico { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .source__ico svg { width: 20px; height: 20px; }
+  .source__ico--o { background: var(--orange-50); color: var(--orange-600); }
+  .source__ico--b { background: var(--parent-50); color: var(--parent-700); }
+  .source__ico--g { background: #f1f2f4; color: #7b8494; }
+  .source__body { flex: 1; }
+  .source__body b { display: block; font-size: 15px; font-weight: 700; color: var(--ink-900); }
+  .source__body span { font-size: 12px; color: var(--ink-500); }
+
+  .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+  .preset {
+    aspect-ratio: 1; border-radius: 16px; border: 2px solid var(--line); background: var(--surface-warm);
+    display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer;
+  }
+  .preset.is-on { border-color: var(--orange-500); background: var(--orange-50); }
+
+  /* 裁剪 */
+  .crop-stage {
+    position: relative; height: 330px; border-radius: var(--r-md); overflow: hidden;
+    background: linear-gradient(160deg, #ffe0c8, #ffb37a 48%, #ff8f6a);
+  }
+  .crop-stage::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 46%, transparent 0 104px, rgba(20,14,8,.55) 105px);
+  }
+  .crop-ring {
+    position: absolute; left: 50%; top: 46%; width: 208px; height: 208px; transform: translate(-50%, -50%);
+    border-radius: 50%; border: 3px solid rgba(255,255,255,.95); z-index: 2;
+  }
+  .crop-subject {
+    position: absolute; left: 50%; top: 46%; width: 320px; height: 320px; transform: translate(-50%, -50%);
+    border-radius: 4px; overflow: hidden; background: linear-gradient(150deg, #ffd3e0, #ffa9c4 55%, #ff86ac);
+    display: flex; align-items: center; justify-content: center; color: #fff; font-size: 76px; font-weight: 800;
+  }
+  .crop-tip {
+    position: absolute; left: 12px; bottom: 12px; z-index: 3; display: flex; gap: 6px; align-items: center;
+    padding: 6px 10px; border-radius: var(--r-pill); background: rgba(255,255,255,.92); font-size: 12px; color: var(--ink-700);
+  }
+  .crop-tip svg { width: 14px; height: 14px; }
+  .zoom { display: flex; align-items: center; gap: 12px; margin: 16px 0 4px; }
+  .zoom__track { flex: 1; height: 6px; border-radius: 3px; background: var(--line); position: relative; }
+  .zoom__fill { position: absolute; inset: 0 42% 0 0; border-radius: 3px; background: var(--orange-400, #ffa057); }
+  .zoom__knob {
+    position: absolute; left: 58%; top: 50%; width: 26px; height: 26px; transform: translate(-50%, -50%);
+    border-radius: 50%; background: #fff; border: 3px solid var(--orange-500); box-shadow: 0 2px 6px rgba(0,0,0,.18);
+  }
+  .zoom svg { width: 18px; height: 18px; color: var(--ink-300); }
+
+  /* 状态集合 */
+  .states { display: grid; gap: 10px; }
+  .state {
+    display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px;
+    background: #fff; border: 1px solid var(--line);
+  }
+  .state__dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex: none; }
+  .state b { display: block; font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .state span { font-size: 12px; line-height: 18px; color: var(--ink-500); }
+
+  .toast {
+    position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: var(--r-pill);
+    background: rgba(42,36,29,.92); color: #fff; font-size: 13px; white-space: nowrap; z-index: 8;
+  }
+  .toast svg { width: 15px; height: 15px; color: #7ee0b4; }
+
+  .brief { width: 430px; margin: 0 auto 26px; padding: 16px 18px; border-radius: 16px; background: #fff; }
+  .brief h2 { margin: 0 0 8px; font-size: 13px; color: #6b5f52; letter-spacing: .4px; }
+  .brief ul { margin: 0; padding-left: 18px; font-size: 12px; line-height: 19px; color: #4b4237; }
+</style>
+</head>
+<body>
+<div class="board">
+  <h1>设计稿 ① 家长端 · 孩子资料（昵称 + 头像）</h1>
+
+  <!-- ============ 屏 1：家长端孩子资料 ============ -->
+  <section class="screen screen--parent">
+    <span class="tag tag--p">家长端 · P-P5 孩子管理 → 编辑资料</span>
+    <header class="topbar">
+      <span class="ghost"></span>
+      <span class="topbar__title">编辑孩子资料</span>
+      <span class="ghost"></span>
+    </header>
+
+    <div class="content">
+      <div class="avatar-block">
+        <div class="avatar-wrap">
+          <div class="avatar">朵</div>
+          <span class="avatar__cam">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5h2.2l1.3-2.1h8l1.3 2.1h2.2a1.6 1.6 0 0 1 1.6 1.6v7.4a1.6 1.6 0 0 1-1.6 1.6H4.5a1.6 1.6 0 0 1-1.6-1.6v-7.4a1.6 1.6 0 0 1 1.6-1.6Z"/><circle cx="12" cy="13.4" r="3.2"/></svg>
+          </span>
+        </div>
+        <p class="avatar-hint">点照片可以换一个</p>
+      </div>
+
+      <div class="card">
+        <p class="card__label">叫什么</p>
+        <div class="name-row">
+          <span class="name-row__value">朵朵</span>
+          <button class="icon-btn" type="button" aria-label="修改昵称">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 19.6h4l10-10a2.3 2.3 0 0 0-3.2-3.2l-10 10Z"/><path d="m13.6 7.6 3.2 3.2"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 展开后的编辑态 -->
+      <div class="card" style="border-color:#3a6ee0">
+        <p class="card__label">改成什么名字</p>
+        <div class="field">
+          <input class="input" value="朵朵" maxlength="12" aria-label="孩子昵称" />
+          <span class="input__count">2/12</span>
+        </div>
+        <div class="actions">
+          <button class="btn btn--ghost" type="button">取消</button>
+          <button class="btn" type="button">保存</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card__label">名字用不了的时候</p>
+        <div class="field">
+          <input class="input input--invalid" value="" placeholder="还没写名字" aria-label="空昵称示例" />
+          <span class="input__count">0/12</span>
+        </div>
+        <p class="field__err">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.8v5"/><circle cx="12" cy="16.2" r=".9" fill="currentColor" stroke="none"/></svg>
+          名字不能为空，写一个就行
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 屏 2：头像来源选择 ============ -->
+  <section class="screen">
+    <span class="tag tag--kid">孩子端 · 我的伙伴 → 换个头像</span>
+    <header class="topbar">
+      <span class="topbar__title" style="color:#857a6c">朵朵</span>
+      <span class="ghost"></span>
+    </header>
+
+    <div class="content" style="padding-bottom:0;filter:blur(1.5px);opacity:.55">
+      <div class="avatar-block">
+        <div class="avatar-wrap"><div class="avatar">朵</div></div>
+      </div>
+      <div class="card"><div class="name-row"><span class="name-row__value">朵朵</span></div></div>
+    </div>
+
+    <div class="sheet">
+      <div class="sheet__bar"></div>
+      <h2 class="sheet__title">用哪个头像？</h2>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <p class="sheet__sub" style="margin:0 0 16px">可以挑一个现成的，也可以用自己的照片。照片只存在这台设备上。</p>
+        <button type="button" style="flex:none;border:0;background:none;font-family:inherit;font-size:14px;font-weight:600;color:#857a6c;padding:2px 0;cursor:pointer">取消</button>
+      </div>
+
+      <div class="source-list">
+        <button class="source" type="button">
+          <span class="source__ico source__ico--o">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.6" y="5.4" width="16.8" height="13.2" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m4.8 17.4 4.6-4.4 3.4 3 3-2.6 3.4 4"/></svg>
+          </span>
+          <span class="source__body"><b>用我的照片</b><span>从相册选，或现在拍一张</span></span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#b3a897" stroke-width="2.2" stroke-linecap="round"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg>
+        </button>
+
+        <button class="source" type="button">
+          <span class="source__ico source__ico--g">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5a4 4 0 0 1 4-4h7a4 4 0 0 1 4 4v7a4 4 0 0 1-4 4h-7a4 4 0 0 1-4-4Z"/><path d="m9 12 2 2 4-4.5"/></svg>
+          </span>
+          <span class="source__body"><b>换回默认头像</b><span>删掉自己的照片，用回小动物</span></span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#b3a897" stroke-width="2.2" stroke-linecap="round"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg>
+        </button>
+      </div>
+
+      <p class="card__label" style="margin:18px 0 0">或者挑一个现成的</p>
+      <div class="preset-grid">
+        <button class="preset is-on" type="button">🐱</button>
+        <button class="preset" type="button">🐰</button>
+        <button class="preset" type="button">🐻</button>
+        <button class="preset" type="button">🦊</button>
+        <button class="preset" type="button">🐼</button>
+        <button class="preset" type="button">🦉</button>
+        <button class="preset" type="button">🦖</button>
+        <button class="preset" type="button">🐳</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 屏 3：裁剪预览 ============ -->
+  <section class="screen">
+    <span class="tag tag--kid">孩子端 · 裁剪（选完照片后的第一步）</span>
+    <header class="topbar">
+      <span class="topbar__back" style="font-size:15px;color:#857a6c">取消</span>
+      <span class="topbar__title">调整照片</span>
+      <span class="ghost"></span>
+    </header>
+
+    <div class="content" style="padding-bottom:102px">
+      <div class="crop-stage">
+        <div class="crop-subject">朵</div>
+        <div class="crop-ring"></div>
+        <span class="crop-tip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 10.5 12 5.5l5 5"/><path d="M12 5.5v13"/></svg>
+          拖动照片，两个手指可以放大
+        </span>
+      </div>
+
+      <div class="zoom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"/><path d="m15.8 15.8 4 4"/></svg>
+        <span class="zoom__track"><span class="zoom__fill"></span><span class="zoom__knob"></span></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.4"/><path d="m15.8 15.8 4 4M8.6 11h4.8M11 8.6v4.8"/></svg>
+      </div>
+
+      <div class="actions" style="margin-top:18px">
+        <button class="btn btn--ghost" type="button">重选一张</button>
+        <button class="btn" type="button">就用这张</button>
+      </div>
+
+      <div class="card" style="margin-top:22px">
+        <p class="card__label">处理中</p>
+        <button class="btn" type="button" disabled style="opacity:.86">正在保存…</button>
+        <p style="margin:10px 0 0;font-size:12px;line-height:18px;color:#857a6c">图片会先缩小到 256×256 再存起来，一般不超 60KB。处理时按钮只换文字，不加转圈。</p>
+      </div>
+
+      <div class="states" style="margin-top:18px">
+        <div class="state">
+          <span class="state__dot" style="background:#d64545"></span>
+          <div><b>格式不支持</b><span>「这张图打不开，换一张 JPG 或 PNG 试试」——原头像不变，可继续挑。</span></div>
+        </div>
+        <div class="state">
+          <span class="state__dot" style="background:#d64545"></span>
+          <div><b>文件太大</b><span>「这张图超过 5MB，换一张小一点的」——不自动裁剪大文件，避免卡住低端机。</span></div>
+        </div>
+        <div class="state">
+          <span class="state__dot" style="background:#b4711a"></span>
+          <div><b>存储空间不足</b><span>「这台设备存不下了，先导出备份清点空间」——原头像保留，绝不静默失败。</span></div>
+        </div>
+        <div class="state">
+          <span class="state__dot" style="background:#1fc08a"></span>
+          <div><b>保存成功</b><span>「头像换好啦」浮层 1.6 秒，所有页面同步（含身份选择头像墙）。</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+      头像换好啦
+    </div>
+  </section>
+
+  <div class="brief">
+    <h2>这张稿要说清的三件事</h2>
+    <ul>
+      <li><b>权限</b>：家长可改所有孩子；孩子只能改自己那一个，且不要求再输家长 PIN（改的是资料，不是钱和审核）。</li>
+      <li><b>输入框不遮键盘</b>：昵称编辑在页面内展开，不弹底部弹层；键盘弹起时保存按钮仍可见（见 04 §13.3）。</li>
+      <li><b>头像不是 emoji</b>：默认头像仍是系统预设（key），上传头像才是图片；两者在数据上是不同字段，互不覆盖（见 05 §2.3 修订）。</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
